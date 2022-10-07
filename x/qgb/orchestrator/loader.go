@@ -14,12 +14,12 @@ type QGBLoaderI interface {
 }
 
 type InMemoryQGBLoader struct {
-	store QGBInMemoryStore
+	store InMemoryQGBStore
 }
 
 var _ QGBLoaderI = &InMemoryQGBLoader{}
 
-func NewInMemoryLoader(store QGBInMemoryStore) *InMemoryQGBLoader {
+func NewInMemoryLoader(store InMemoryQGBStore) *InMemoryQGBLoader {
 	return &InMemoryQGBLoader{store: store}
 }
 

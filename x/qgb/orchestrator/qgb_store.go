@@ -22,9 +22,9 @@ type QGBStoreI interface {
 	// TODO prune the data after an unbonding period
 }
 
-// QGBInMemoryStore is simple in memory store for data commitment confirms and valset confirms.
+// InMemoryQGBStore is simple in memory store for data commitment confirms and valset confirms.
 // To be used with the InMemoryIndexer.
-type QGBInMemoryStore struct {
+type InMemoryQGBStore struct {
 	mutex                  *sync.Mutex
 	DataCommitmentConfirms map[uint64][]types.MsgDataCommitmentConfirm
 	ValsetConfirms         map[uint64][]types.MsgValsetConfirm
@@ -33,10 +33,10 @@ type QGBInMemoryStore struct {
 	// is accepted
 }
 
-var _ QGBStoreI = &QGBInMemoryStore{}
+var _ QGBStoreI = &InMemoryQGBStore{}
 
-func NewConfirmStore() *QGBInMemoryStore {
-	return &QGBInMemoryStore{
+func NewConfirmStore() *InMemoryQGBStore {
+	return &InMemoryQGBStore{
 		DataCommitmentConfirms: make(map[uint64][]types.MsgDataCommitmentConfirm),
 		ValsetConfirms:         make(map[uint64][]types.MsgValsetConfirm),
 		mutex:                  &sync.Mutex{},
@@ -44,14 +44,14 @@ func NewConfirmStore() *QGBInMemoryStore {
 	}
 }
 
-func (store *QGBInMemoryStore) AddDataCommitmentConfirm(confirm types.MsgDataCommitmentConfirm) error {
+func (store *InMemoryQGBStore) AddDataCommitmentConfirm(confirm types.MsgDataCommitmentConfirm) error {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	store.DataCommitmentConfirms[confirm.Nonce] = append(store.DataCommitmentConfirms[confirm.Nonce], confirm)
 	return nil
 }
 
-func (store *QGBInMemoryStore) GetDataCommitmentConfirms(nonce uint64) ([]types.MsgDataCommitmentConfirm, error) {
+func (store *InMemoryQGBStore) GetDataCommitmentConfirms(nonce uint64) ([]types.MsgDataCommitmentConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
@@ -61,7 +61,7 @@ func (store *QGBInMemoryStore) GetDataCommitmentConfirms(nonce uint64) ([]types.
 	return confirms, nil
 }
 
-func (store *QGBInMemoryStore) GetDataCommitmentConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgDataCommitmentConfirm, error) {
+func (store *InMemoryQGBStore) GetDataCommitmentConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgDataCommitmentConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
@@ -76,7 +76,7 @@ func (store *QGBInMemoryStore) GetDataCommitmentConfirmByOrchestratorAddress(non
 	return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
 }
 
-func (store *QGBInMemoryStore) GetDataCommitmentConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgDataCommitmentConfirm, error) {
+func (store *InMemoryQGBStore) GetDataCommitmentConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgDataCommitmentConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
@@ -91,14 +91,14 @@ func (store *QGBInMemoryStore) GetDataCommitmentConfirmByEthereumAddress(nonce u
 	return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
 }
 
-func (store *QGBInMemoryStore) AddValsetConfirm(confirm types.MsgValsetConfirm) error {
+func (store *InMemoryQGBStore) AddValsetConfirm(confirm types.MsgValsetConfirm) error {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	store.ValsetConfirms[confirm.Nonce] = append(store.ValsetConfirms[confirm.Nonce], confirm)
 	return nil
 }
 
-func (store *QGBInMemoryStore) GetValsetConfirms(nonce uint64) ([]types.MsgValsetConfirm, error) {
+func (store *InMemoryQGBStore) GetValsetConfirms(nonce uint64) ([]types.MsgValsetConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
@@ -108,7 +108,7 @@ func (store *QGBInMemoryStore) GetValsetConfirms(nonce uint64) ([]types.MsgValse
 	return confirms, nil
 }
 
-func (store *QGBInMemoryStore) GetValsetConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgValsetConfirm, error) {
+func (store *InMemoryQGBStore) GetValsetConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgValsetConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
@@ -123,7 +123,7 @@ func (store *QGBInMemoryStore) GetValsetConfirmByOrchestratorAddress(nonce uint6
 	return types.MsgValsetConfirm{}, fmt.Errorf("not existent")
 }
 
-func (store *QGBInMemoryStore) GetValsetConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgValsetConfirm, error) {
+func (store *InMemoryQGBStore) GetValsetConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgValsetConfirm, error) {
 	store.mutex.Lock()
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
@@ -141,7 +141,7 @@ func (store *QGBInMemoryStore) GetValsetConfirmByEthereumAddress(nonce uint64, e
 // TODO We can use a map in here (if we  find something to store as value)
 // Also, we could create a fixed sized array that doubles in size everytime and contains -1
 // and whenever we add a height, we add it at its ID
-func (store *QGBInMemoryStore) AddHeight(height int64) error {
+func (store *InMemoryQGBStore) AddHeight(height int64) error {
 	// https://gist.github.com/danielrangelmoreira/33b9b0686ac4e2ee2cb5f75a9896b28f
 	i := sort.Search(len(store.Heights), func(i int) bool { return store.Heights[i] >= height })
 	store.Heights = append(store.Heights, 0)
