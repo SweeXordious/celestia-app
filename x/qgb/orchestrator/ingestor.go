@@ -209,6 +209,7 @@ func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, s
 					}
 				}
 			}
+			ingestor.indexer.AddHeight(*height) // handle error
 		}
 	}
 }

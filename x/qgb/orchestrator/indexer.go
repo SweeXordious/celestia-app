@@ -9,6 +9,7 @@ type IndexerI interface {
 	Stop() error
 	AddDataCommitmentConfirm(confirm types.MsgDataCommitmentConfirm) error
 	AddValsetConfirm(confirm types.MsgValsetConfirm) error
+	AddHeight(height int64) error
 	//Remove() error ?
 }
 
@@ -38,4 +39,8 @@ func (indexer InMemoryIndexer) AddDataCommitmentConfirm(confirm types.MsgDataCom
 
 func (indexer InMemoryIndexer) AddValsetConfirm(confirm types.MsgValsetConfirm) error {
 	return indexer.Store.AddValsetConfirm(confirm)
+}
+
+func (indexer InMemoryIndexer) AddHeight(height int64) error {
+	return indexer.Store.AddHeight(height)
 }
