@@ -24,6 +24,15 @@ func NewMsgValsetConfirm(
 	}
 }
 
+// IsEmptyMsgValsetConfirm takes a msg valset confirm and checks if it is an empty one.
+func IsEmptyMsgValsetConfirm(vs types.MsgValsetConfirm) bool {
+	emptyVsConfirm := types.MsgValsetConfirm{}
+	return vs.Nonce == emptyVsConfirm.Nonce &&
+		vs.EthAddress == emptyVsConfirm.EthAddress &&
+		vs.Orchestrator == emptyVsConfirm.Orchestrator &&
+		vs.Signature == emptyVsConfirm.Signature
+}
+
 // NewMsgDataCommitmentConfirm creates a new NewMsgDataCommitmentConfirm.
 func NewMsgDataCommitmentConfirm(
 	commitment string,
@@ -43,6 +52,17 @@ func NewMsgDataCommitmentConfirm(
 		EndBlock:         endBlock,
 		Nonce:            nonce,
 	}
+}
+
+func IsEmptyMsgDataCommitmentConfirm(dcc types.MsgDataCommitmentConfirm) bool {
+	emptyDcc := types.MsgDataCommitmentConfirm{}
+	return dcc.Nonce == emptyDcc.Nonce &&
+		dcc.EthAddress == emptyDcc.EthAddress &&
+		dcc.ValidatorAddress == emptyDcc.ValidatorAddress &&
+		dcc.Commitment == emptyDcc.Commitment &&
+		dcc.Signature == emptyDcc.Signature &&
+		dcc.BeginBlock == emptyDcc.BeginBlock &&
+		dcc.EndBlock == emptyDcc.EndBlock
 }
 
 // DataCommitmentTupleRootSignBytes EncodeDomainSeparatedDataCommitment takes the required input data and
