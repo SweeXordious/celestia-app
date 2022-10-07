@@ -15,10 +15,10 @@ type IndexerI interface {
 var _ IndexerI = &InMemoryIndexer{}
 
 type InMemoryIndexer struct {
-	Store *ConfirmStore
+	Store *QGBInMemoryStore
 }
 
-func NewInMemoryIndexer(store *ConfirmStore) *InMemoryIndexer {
+func NewInMemoryIndexer(store *QGBInMemoryStore) *InMemoryIndexer {
 	return &InMemoryIndexer{
 		Store: store,
 	}
