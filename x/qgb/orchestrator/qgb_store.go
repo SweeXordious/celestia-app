@@ -1,24 +1,51 @@
 package orchestrator
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 )
 
+// TODO update all queries to return empty result if not found instead of error
+
 // QGBStoreI is a store interface for data commitment confirms and valset confirms.
 type QGBStoreI interface {
+	// TODO add start/stop
 	// TODO add attestations also here
+
 	AddDataCommitmentConfirm(confirm types.MsgDataCommitmentConfirm) error
+
+	// GetDataCommitmentConfirms returns data commitment confirms of a certain nonce.
+	// returns empty slice if not found.
 	GetDataCommitmentConfirms(nonce uint64) ([]types.MsgDataCommitmentConfirm, error)
+
+	// GetDataCommitmentConfirmByOrchestratorAddress returns a data commitment confirm with the specified nonce
+	// and orchestrator address.
+	// returns empty confirm if not found.
 	GetDataCommitmentConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgDataCommitmentConfirm, error)
+
+	// GetDataCommitmentConfirmByEthereumAddress returns a data commitment confirm with the specified nonce
+	// and ethereum address.
+	// returns empty confirm if not found.
 	GetDataCommitmentConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgDataCommitmentConfirm, error)
+
 	AddValsetConfirm(confirm types.MsgValsetConfirm) error
+
+	// GetValsetConfirms returns valset confirms of a certain nonce.
+	// returns empty slice if not found.
 	GetValsetConfirms(nonce uint64) ([]types.MsgValsetConfirm, error)
+
+	// GetValsetConfirmByOrchestratorAddress returns a valset confirm with the specified nonce
+	// and orchestrator address.
+	// returns empty confirm if not found.
 	GetValsetConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgValsetConfirm, error)
+
+	// GetValsetConfirmByEthereumAddress returns a valset confirm with the specified nonce
+	// and ethereum address.
+	// returns empty confirm if not found.
 	GetValsetConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgValsetConfirm, error)
+
 	// TODO prune the data after an unbonding period
 }
 
@@ -35,7 +62,7 @@ type InMemoryQGBStore struct {
 
 var _ QGBStoreI = &InMemoryQGBStore{}
 
-func NewConfirmStore() *InMemoryQGBStore {
+func NewInMemoryQGBStore() *InMemoryQGBStore {
 	return &InMemoryQGBStore{
 		DataCommitmentConfirms: make(map[uint64][]types.MsgDataCommitmentConfirm),
 		ValsetConfirms:         make(map[uint64][]types.MsgValsetConfirm),
@@ -56,7 +83,7 @@ func (store *InMemoryQGBStore) GetDataCommitmentConfirms(nonce uint64) ([]types.
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
 	if !ok {
-		return nil, fmt.Errorf("not existant")
+		return []types.MsgDataCommitmentConfirm{}, nil
 	}
 	return confirms, nil
 }
@@ -66,14 +93,14 @@ func (store *InMemoryQGBStore) GetDataCommitmentConfirmByOrchestratorAddress(non
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
 	if !ok {
-		return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
+		return types.MsgDataCommitmentConfirm{}, nil
 	}
 	for _, confirm := range confirms {
 		if confirm.ValidatorAddress == orch {
 			return confirm, nil
 		}
 	}
-	return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
+	return types.MsgDataCommitmentConfirm{}, nil
 }
 
 func (store *InMemoryQGBStore) GetDataCommitmentConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgDataCommitmentConfirm, error) {
@@ -81,14 +108,14 @@ func (store *InMemoryQGBStore) GetDataCommitmentConfirmByEthereumAddress(nonce u
 	defer store.mutex.Unlock()
 	confirms, ok := store.DataCommitmentConfirms[nonce]
 	if !ok {
-		return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
+		return types.MsgDataCommitmentConfirm{}, nil
 	}
 	for _, confirm := range confirms {
 		if confirm.EthAddress == ethAddr {
 			return confirm, nil
 		}
 	}
-	return types.MsgDataCommitmentConfirm{}, fmt.Errorf("not existent")
+	return types.MsgDataCommitmentConfirm{}, nil
 }
 
 func (store *InMemoryQGBStore) AddValsetConfirm(confirm types.MsgValsetConfirm) error {
@@ -103,7 +130,7 @@ func (store *InMemoryQGBStore) GetValsetConfirms(nonce uint64) ([]types.MsgValse
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
 	if !ok {
-		return nil, fmt.Errorf("not existant")
+		return []types.MsgValsetConfirm{}, nil
 	}
 	return confirms, nil
 }
@@ -113,14 +140,14 @@ func (store *InMemoryQGBStore) GetValsetConfirmByOrchestratorAddress(nonce uint6
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
 	if !ok {
-		return types.MsgValsetConfirm{}, fmt.Errorf("not existent")
+		return types.MsgValsetConfirm{}, nil
 	}
 	for _, confirm := range confirms {
 		if confirm.Orchestrator == orch {
 			return confirm, nil
 		}
 	}
-	return types.MsgValsetConfirm{}, fmt.Errorf("not existent")
+	return types.MsgValsetConfirm{}, nil
 }
 
 func (store *InMemoryQGBStore) GetValsetConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgValsetConfirm, error) {
@@ -128,14 +155,14 @@ func (store *InMemoryQGBStore) GetValsetConfirmByEthereumAddress(nonce uint64, e
 	defer store.mutex.Unlock()
 	confirms, ok := store.ValsetConfirms[nonce]
 	if !ok {
-		return types.MsgValsetConfirm{}, fmt.Errorf("not existent")
+		return types.MsgValsetConfirm{}, nil
 	}
 	for _, confirm := range confirms {
 		if confirm.EthAddress == ethAddr {
 			return confirm, nil
 		}
 	}
-	return types.MsgValsetConfirm{}, fmt.Errorf("not existent")
+	return types.MsgValsetConfirm{}, nil
 }
 
 // TODO We can use a map in here (if we  find something to store as value)
