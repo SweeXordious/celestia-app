@@ -150,13 +150,13 @@ func (orch Orchestrator) StartNewEventsListener(
 		case <-ctx.Done():
 			return nil
 		case result := <-results:
-			blockEvent := mustGetEvent(result, coretypes.EventTypeKey)
+			blockEvent := MustGetEvent(result, coretypes.EventTypeKey)
 			isBlock := blockEvent[0] == coretypes.EventNewBlock
 			if !isBlock {
 				// we only want to handle the attestation when the block is committed
 				continue
 			}
-			attestationEvent := mustGetEvent(result, attestationEventName)
+			attestationEvent := MustGetEvent(result, attestationEventName)
 			nonce, err := strconv.Atoi(attestationEvent[0])
 			if err != nil {
 				return err
@@ -495,9 +495,10 @@ func (r Retrier) RetryThenFail(ctx context.Context, nonce uint64, retryMethod fu
 	}
 }
 
-// mustGetEvent takes a corerpctypes.ResultEvent and checks whether it has
+// MustGetEvent takes a corerpctypes.ResultEvent and checks whether it has
 // the provided eventName. If not, it panics.
-func mustGetEvent(result corerpctypes.ResultEvent, eventName string) []string {
+// TODO can be moved to some utils file
+func MustGetEvent(result corerpctypes.ResultEvent, eventName string) []string {
 	ev := result.Events[eventName]
 	if len(ev) == 0 {
 		panic(errors.Wrap(
