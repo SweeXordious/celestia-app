@@ -26,7 +26,7 @@ import (
 var _ I = &Orchestrator{}
 
 type I interface {
-	Start(ctx context.Context)
+	Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{})
 	StartNewEventsListener(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
 	EnqueueMissingEvents(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
 	ProcessNonces(ctx context.Context, noncesQueue <-chan uint64, signalChan chan<- struct{}) error
@@ -75,7 +75,9 @@ func NewOrchestrator(
 	}, nil
 }
 
-func (orch Orchestrator) Start(ctx context.Context) {
+func (orch Orchestrator) Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{}) {
+	<-enqueueMissingBlockSignal
+
 	// contains the nonces that will be signed by the orchestrator.
 	noncesQueue := make(chan uint64, 100)
 	defer close(noncesQueue)
