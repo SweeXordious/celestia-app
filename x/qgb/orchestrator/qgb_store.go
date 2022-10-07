@@ -28,8 +28,9 @@ type QGBInMemoryStore struct {
 	mutex                  *sync.Mutex
 	DataCommitmentConfirms map[uint64][]types.MsgDataCommitmentConfirm
 	ValsetConfirms         map[uint64][]types.MsgValsetConfirm
-	Attestations           map[uint64]types.AttestationRequestI // TODO add methods for this
-	Heights                []int64                              // should this be pointers?
+	Heights                []int64 // should this be pointers?
+	// TODO add attestations if  https://github.com/celestiaorg/celestia-app/issues/843
+	// is accepted
 }
 
 var _ QGBStoreI = &QGBInMemoryStore{}
