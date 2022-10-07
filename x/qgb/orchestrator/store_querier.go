@@ -50,6 +50,14 @@ type QGBStoreQuerier struct {
 	// got accepted
 }
 
+func NewQGBStoreQuerier(logger tmlog.Logger, storeLoader QGBLoaderI, stateQuerier RPCStateQuerierI) *QGBStoreQuerier {
+	return &QGBStoreQuerier{
+		logger:       logger,
+		StoreLoader:  storeLoader,
+		StateQuerier: stateQuerier,
+	}
+}
+
 func (q QGBStoreQuerier) QueryTwoThirdsDataCommitmentConfirms(
 	ctx context.Context,
 	timeout time.Duration,
