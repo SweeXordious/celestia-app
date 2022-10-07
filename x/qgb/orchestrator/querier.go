@@ -20,9 +20,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var _ RPCQuerierI = &querier{}
+var _ RPCStateQuerierI = &RPCStateQuerier{}
 
-type RPCQuerierI interface {
+type RPCStateQuerierI interface {
 	// attestation queries
 
 	// QueryAttestationByNonce Queries the attestation with nonce `nonce.
@@ -81,18 +81,18 @@ type RPCQuerierI interface {
 	SubscribeEvents(ctx context.Context, subscriptionName string, eventName string) (<-chan coretypes.ResultEvent, error)
 }
 
-type querier struct {
+type RPCStateQuerier struct {
 	qgbRPC        *grpc.ClientConn
 	logger        tmlog.Logger
 	tendermintRPC *http.HTTP
 	encCfg        encoding.Config
 }
 
-func NewQuerier(
+func NewRPCStateQuerier(
 	qgbRPCAddr, tendermintRPC string,
 	logger tmlog.Logger,
 	encCft encoding.Config,
-) (*querier, error) {
+) (*RPCStateQuerier, error) {
 	qgbGRPC, err := grpc.Dial(qgbRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func NewQuerier(
 		return nil, err
 	}
 
-	return &querier{
+	return &RPCStateQuerier{
 		qgbRPC:        qgbGRPC,
 		logger:        logger,
 		tendermintRPC: trpc,
@@ -116,7 +116,7 @@ func NewQuerier(
 }
 
 // TODO add the other stop methods for other clients.
-func (q querier) Stop() {
+func (q RPCStateQuerier) Stop() {
 	err := q.qgbRPC.Close()
 	if err != nil {
 		q.logger.Error(err.Error())
@@ -127,7 +127,7 @@ func (q querier) Stop() {
 	}
 }
 
-func (q *querier) QueryTwoThirdsDataCommitmentConfirms(
+func (q *RPCStateQuerier) QueryTwoThirdsDataCommitmentConfirms(
 	ctx context.Context,
 	timeout time.Duration,
 	dc types.DataCommitment,
@@ -240,7 +240,7 @@ func validateDCConfirm(commitment string, confirm types.MsgDataCommitmentConfirm
 	return nil
 }
 
-func (q querier) QueryTwoThirdsValsetConfirms(
+func (q RPCStateQuerier) QueryTwoThirdsValsetConfirms(
 	ctx context.Context,
 	timeout time.Duration,
 	valset types.Valset,
@@ -358,7 +358,7 @@ func validateValsetConfirm(vs types.Valset, confirm types.MsgValsetConfirm) erro
 // QueryLastValsetBeforeNonce returns the last valset before nonce.
 // the provided `nonce` can be a valset, but this will return the valset before it.
 // If nonce is 1, it will return an error. Because, there is no valset before nonce 1.
-func (q querier) QueryLastValsetBeforeNonce(ctx context.Context, nonce uint64) (*types.Valset, error) {
+func (q RPCStateQuerier) QueryLastValsetBeforeNonce(ctx context.Context, nonce uint64) (*types.Valset, error) {
 	//queryClient := types.NewQueryClient(q.qgbRPC)
 	//resp, err := queryClient.LastValsetRequestBeforeNonce(
 	//	ctx,
@@ -372,7 +372,7 @@ func (q querier) QueryLastValsetBeforeNonce(ctx context.Context, nonce uint64) (
 	return nil, nil
 }
 
-func (q querier) QueryValsetConfirm(
+func (q RPCStateQuerier) QueryValsetConfirm(
 	ctx context.Context,
 	nonce uint64,
 	address string,
@@ -389,7 +389,7 @@ func (q querier) QueryValsetConfirm(
 	return nil, nil
 }
 
-func (q querier) QueryLastUnbondingHeight(ctx context.Context) (uint64, error) {
+func (q RPCStateQuerier) QueryLastUnbondingHeight(ctx context.Context) (uint64, error) {
 	queryClient := types.NewQueryClient(q.qgbRPC)
 	resp, err := queryClient.LastUnbondingHeight(ctx, &types.QueryLastUnbondingHeightRequest{})
 	if err != nil {
@@ -399,7 +399,7 @@ func (q querier) QueryLastUnbondingHeight(ctx context.Context) (uint64, error) {
 	return resp.Height, nil
 }
 
-func (q querier) QueryDataCommitmentConfirm(
+func (q RPCStateQuerier) QueryDataCommitmentConfirm(
 	ctx context.Context,
 	endBlock uint64,
 	beginBlock uint64,
@@ -423,7 +423,7 @@ func (q querier) QueryDataCommitmentConfirm(
 	return nil, nil
 }
 
-func (q querier) QueryDataCommitmentConfirmsByExactRange(
+func (q RPCStateQuerier) QueryDataCommitmentConfirmsByExactRange(
 	ctx context.Context,
 	start uint64,
 	end uint64,
@@ -443,7 +443,7 @@ func (q querier) QueryDataCommitmentConfirmsByExactRange(
 	return nil, nil
 }
 
-func (q querier) QueryDataCommitmentByNonce(ctx context.Context, nonce uint64) (*types.DataCommitment, error) {
+func (q RPCStateQuerier) QueryDataCommitmentByNonce(ctx context.Context, nonce uint64) (*types.DataCommitment, error) {
 	attestation, err := q.QueryAttestationByNonce(ctx, nonce)
 	if err != nil {
 		return nil, err
@@ -464,7 +464,7 @@ func (q querier) QueryDataCommitmentByNonce(ctx context.Context, nonce uint64) (
 	return dcc, nil
 }
 
-func (q querier) QueryAttestationByNonce(
+func (q RPCStateQuerier) QueryAttestationByNonce(
 	ctx context.Context,
 	nonce uint64,
 ) (types.AttestationRequestI, error) { // FIXME is it alright to return interface?
@@ -488,7 +488,7 @@ func (q querier) QueryAttestationByNonce(
 	return unmarshalledAttestation, nil
 }
 
-func (q querier) QueryValsetByNonce(ctx context.Context, nonce uint64) (*types.Valset, error) {
+func (q RPCStateQuerier) QueryValsetByNonce(ctx context.Context, nonce uint64) (*types.Valset, error) {
 	attestation, err := q.QueryAttestationByNonce(ctx, nonce)
 	if err != nil {
 		return nil, err
@@ -509,7 +509,7 @@ func (q querier) QueryValsetByNonce(ctx context.Context, nonce uint64) (*types.V
 	return value, nil
 }
 
-func (q querier) QueryLatestValset(ctx context.Context) (*types.Valset, error) {
+func (q RPCStateQuerier) QueryLatestValset(ctx context.Context) (*types.Valset, error) {
 	latestNonce, err := q.QueryLatestAttestationNonce(ctx)
 	if err != nil {
 		return nil, err
@@ -527,7 +527,7 @@ func (q querier) QueryLatestValset(ctx context.Context) (*types.Valset, error) {
 	return latestValset, nil
 }
 
-func (q querier) QueryLatestAttestationNonce(ctx context.Context) (uint64, error) {
+func (q RPCStateQuerier) QueryLatestAttestationNonce(ctx context.Context) (uint64, error) {
 	queryClient := types.NewQueryClient(q.qgbRPC)
 
 	resp, err := queryClient.LatestAttestationNonce(
@@ -542,7 +542,7 @@ func (q querier) QueryLatestAttestationNonce(ctx context.Context) (uint64, error
 }
 
 // QueryCommitment queries the commitment over a set of blocks defined in the query.
-func (q querier) QueryCommitment(ctx context.Context, beginBlock uint64, endBlock uint64) (bytes.HexBytes, error) {
+func (q RPCStateQuerier) QueryCommitment(ctx context.Context, beginBlock uint64, endBlock uint64) (bytes.HexBytes, error) {
 	dcResp, err := q.tendermintRPC.DataCommitment(ctx, beginBlock, endBlock)
 	if err != nil {
 		return nil, err
@@ -550,7 +550,7 @@ func (q querier) QueryCommitment(ctx context.Context, beginBlock uint64, endBloc
 	return dcResp.DataCommitment, nil
 }
 
-func (q querier) SubscribeEvents(ctx context.Context, subscriptionName string, eventName string) (<-chan coretypes.ResultEvent, error) {
+func (q RPCStateQuerier) SubscribeEvents(ctx context.Context, subscriptionName string, eventName string) (<-chan coretypes.ResultEvent, error) {
 	// This doesn't seem to complain when the node is down
 	results, err := q.tendermintRPC.Subscribe(
 		ctx,
@@ -563,7 +563,7 @@ func (q querier) SubscribeEvents(ctx context.Context, subscriptionName string, e
 	return results, err
 }
 
-func (q querier) unmarshallAttestation(attestation *cdctypes.Any) (types.AttestationRequestI, error) {
+func (q RPCStateQuerier) unmarshallAttestation(attestation *cdctypes.Any) (types.AttestationRequestI, error) {
 	var unmarshalledAttestation types.AttestationRequestI
 	err := q.encCfg.InterfaceRegistry.UnpackAny(attestation, &unmarshalledAttestation)
 	if err != nil {

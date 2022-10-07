@@ -43,14 +43,14 @@ type Orchestrator struct {
 	OrchEthAddress ethcmn.Address
 	OrchAccAddress sdk.AccAddress
 
-	Querier     RPCQuerierI
+	Querier     RPCStateQuerierI
 	Broadcaster BroadcasterI
 	Retrier     RetrierI
 }
 
 func NewOrchestrator(
 	logger tmlog.Logger,
-	querier RPCQuerierI,
+	querier RPCStateQuerierI,
 	broadcaster BroadcasterI,
 	retrier RetrierI,
 	signer *paytypes.KeyringSigner,
@@ -252,12 +252,12 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 	//	// where the `earliest` flag is specified when deploying the contract, will be relayed as part of
 	//	// the deployment of the QGB contract.
 	//	// It will be signed temporarily for now.
-	//	previousValset, err = orch.RPCQuerierI.QueryValsetByNonce(ctx, att.GetNonce())
+	//	previousValset, err = orch.RPCStateQuerierI.QueryValsetByNonce(ctx, att.GetNonce())
 	//	if err != nil {
 	//		return err
 	//	}
 	//} else {
-	//	previousValset, err = orch.RPCQuerierI.QueryLastValsetBeforeNonce(ctx, att.GetNonce())
+	//	previousValset, err = orch.RPCStateQuerierI.QueryLastValsetBeforeNonce(ctx, att.GetNonce())
 	//	if err != nil {
 	//		return err
 	//	}

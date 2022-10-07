@@ -35,7 +35,7 @@ func RelayerCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				return err
 			}

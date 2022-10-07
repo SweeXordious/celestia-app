@@ -403,7 +403,7 @@ func (network QGBNetwork) WaitForBlockWithCustomTimeout(
 // and for any nonce, but would require adding a new method to the querier. Don't think it is worth it now as
 // the number of valsets that will be signed is trivial and reaching 0 would be in no time).
 func (network QGBNetwork) WaitForOrchestratorToStart(_ctx context.Context, accountAddress string) error {
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	if err != nil {
 		return err
 	}
@@ -454,7 +454,7 @@ func (network QGBNetwork) WaitForOrchestratorToStart(_ctx context.Context, accou
 // This is used after enabling orchestrators not to sign unless they belong to some valset.
 // Thus, any nonce after the returned valset should be signed by all orchestrators.
 func (network QGBNetwork) GetValsetContainingVals(_ctx context.Context, number int) (*types.Valset, error) {
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -499,7 +499,7 @@ func (network QGBNetwork) GetAttestationConfirm(
 	nonce uint64,
 	account string,
 ) (sdk.Msg, error) {
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	if err != nil {
 		return nil, err
 	}

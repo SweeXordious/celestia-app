@@ -41,7 +41,7 @@ func TestOrchestratorWithOneValidator(t *testing.T) {
 	time.Sleep(30 * time.Second)
 
 	// FIXME should we use the querier here or go for raw queries?
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	vsConfirm, err := querier.QueryValsetConfirm(ctx, 1, CORE0ACCOUNTADDRESS)
@@ -101,7 +101,7 @@ func TestOrchestratorWithTwoValidators(t *testing.T) {
 	// give the orchestrators some time to catchup
 	time.Sleep(30 * time.Second)
 
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	// check core0 submited the valset confirm
@@ -171,7 +171,7 @@ func TestOrchestratorWithMultipleValidators(t *testing.T) {
 	// give the orchestrators some time to catchup
 	time.Sleep(30 * time.Second)
 
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	// check core0 submited the valset confirm
@@ -262,7 +262,7 @@ func TestOrchestratorReplayOld(t *testing.T) {
 	time.Sleep(30 * time.Second)
 
 	// FIXME should we use the querier here or go for raw queries?
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	// check core0 submitted valset 1 confirm

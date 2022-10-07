@@ -37,7 +37,7 @@ func TestFullLongBehaviour(t *testing.T) {
 	HandleNetworkError(t, network, err, false)
 
 	// check whether the four validators are up and running
-	querier, err := orchestrator.NewQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	// check whether all the validators are up and running

@@ -27,7 +27,7 @@ func DeployCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func DeployCmd() *cobra.Command {
 	return addDeployFlags(command)
 }
 
-func getStartingValset(ctx context.Context, q *querier, snonce string) (*types.Valset, error) {
+func getStartingValset(ctx context.Context, q *RPCStateQuerier, snonce string) (*types.Valset, error) {
 	switch snonce {
 	case "latest":
 		return q.QueryLatestValset(ctx)

@@ -14,13 +14,13 @@ import (
 )
 
 type Relayer struct {
-	querier   RPCQuerierI
+	querier   RPCStateQuerierI
 	evmClient EVMClient
 	bridgeID  ethcmn.Hash
 	logger    tmlog.Logger
 }
 
-func NewRelayer(querier RPCQuerierI, evmClient EVMClient, logger tmlog.Logger) (*Relayer, error) {
+func NewRelayer(querier RPCStateQuerierI, evmClient EVMClient, logger tmlog.Logger) (*Relayer, error) {
 	return &Relayer{
 		querier:   querier,
 		bridgeID:  types.BridgeID,

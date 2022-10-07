@@ -21,11 +21,11 @@ type Ingestor struct {
 	extractor ExtractorI
 	parser    QGBParserI
 	indexer   IndexerI
-	Querier   RPCQuerierI
+	Querier   RPCStateQuerierI
 	workers   int
 }
 
-func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, querier RPCQuerierI, logger tmlog.Logger, workers int) (*Ingestor, error) {
+func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, querier RPCStateQuerierI, logger tmlog.Logger, workers int) (*Ingestor, error) {
 	return &Ingestor{
 		extractor: extractor,
 		parser:    parser,
