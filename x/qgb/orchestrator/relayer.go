@@ -14,18 +14,20 @@ import (
 )
 
 type Relayer struct {
-	querier   RPCStateQuerierI
-	evmClient EVMClient
-	bridgeID  ethcmn.Hash
-	logger    tmlog.Logger
+	StateQuerier RPCStateQuerierI
+	StoreQuerier QGBStoreQuerierI
+	evmClient    EVMClient
+	bridgeID     ethcmn.Hash
+	logger       tmlog.Logger
 }
 
-func NewRelayer(querier RPCStateQuerierI, evmClient EVMClient, logger tmlog.Logger) (*Relayer, error) {
+func NewRelayer(stateQuerier RPCStateQuerierI, storeQuerier QGBStoreQuerierI, evmClient EVMClient, logger tmlog.Logger) (*Relayer, error) {
 	return &Relayer{
-		querier:   querier,
-		bridgeID:  types.BridgeID,
-		evmClient: evmClient,
-		logger:    logger,
+		StateQuerier: stateQuerier,
+		StoreQuerier: storeQuerier,
+		bridgeID:     types.BridgeID,
+		evmClient:    evmClient,
+		logger:       logger,
 	}, nil
 }
 
@@ -37,7 +39,7 @@ func (r *Relayer) processEvents(ctx context.Context) error {
 			continue
 		}
 
-		latestNonce, err := r.querier.QueryLatestAttestationNonce(ctx)
+		latestNonce, err := r.StateQuerier.QueryLatestAttestationNonce(ctx)
 		if err != nil {
 			r.logger.Error(err.Error())
 			continue
@@ -49,7 +51,7 @@ func (r *Relayer) processEvents(ctx context.Context) error {
 			continue
 		}
 
-		att, err := r.querier.QueryAttestationByNonce(ctx, lastContractNonce+1)
+		att, err := r.StateQuerier.QueryAttestationByNonce(ctx, lastContractNonce+1)
 		if err != nil {
 			r.logger.Error(err.Error())
 			continue
@@ -63,7 +65,7 @@ func (r *Relayer) processEvents(ctx context.Context) error {
 			if !ok {
 				return types.ErrAttestationNotValsetRequest
 			}
-			confirms, err := r.querier.QueryTwoThirdsValsetConfirms(ctx, time.Minute*30, *vs)
+			confirms, err := r.StoreQuerier.QueryTwoThirdsValsetConfirms(ctx, time.Minute*30, *vs)
 			if err != nil {
 				return err
 			}
@@ -79,12 +81,12 @@ func (r *Relayer) processEvents(ctx context.Context) error {
 				return types.ErrAttestationNotDataCommitmentRequest
 			}
 			// todo: make times configurable
-			confirms, err := r.querier.QueryTwoThirdsDataCommitmentConfirms(ctx, time.Minute*30, *dc)
+			confirms, err := r.StoreQuerier.QueryTwoThirdsDataCommitmentConfirms(ctx, time.Minute*30, *dc)
 			if err != nil {
 				return err
 			}
 
-			valset, err := r.querier.QueryLastValsetBeforeNonce(ctx, dc.Nonce)
+			valset, err := r.StateQuerier.QueryLastValsetBeforeNonce(ctx, dc.Nonce)
 			if err != nil {
 				return err
 			}
@@ -107,7 +109,7 @@ func (r *Relayer) updateValidatorSet(
 	if valset.Nonce == 1 {
 		currentValset = valset
 	} else {
-		vs, err := r.querier.QueryLastValsetBeforeNonce(ctx, valset.Nonce)
+		vs, err := r.StateQuerier.QueryLastValsetBeforeNonce(ctx, valset.Nonce)
 		if err != nil {
 			return err
 		}

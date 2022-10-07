@@ -40,8 +40,13 @@ func RelayerCmd() *cobra.Command {
 				return err
 			}
 
+			store := NewInMemoryQGBStore()
+			loader := NewInMemoryLoader(*store)
+			storeQuerier := NewQGBStoreQuerier(logger, loader, querier)
+
 			relay, err := NewRelayer(
 				querier,
+				storeQuerier,
 				NewEvmClient(
 					tmlog.NewTMLogger(os.Stdout),
 					qgbWrapper,
