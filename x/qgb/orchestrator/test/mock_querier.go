@@ -10,7 +10,7 @@ import (
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-var _ orchestrator.Querier = &mockQuerier{}
+var _ orchestrator.RPCQuerierI = &mockQuerier{}
 
 type mockQuerier struct {
 	confirms []types.MsgDataCommitmentConfirm

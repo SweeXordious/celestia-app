@@ -20,9 +20,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var _ Querier = &querier{}
+var _ RPCQuerierI = &querier{}
 
-type Querier interface {
+type RPCQuerierI interface {
 	// attestation queries
 
 	// QueryAttestationByNonce Queries the attestation with nonce `nonce.
