@@ -43,14 +43,16 @@ type Orchestrator struct {
 	OrchEthAddress ethcmn.Address
 	OrchAccAddress sdk.AccAddress
 
-	Querier     RPCStateQuerierI
-	Broadcaster BroadcasterI
-	Retrier     RetrierI
+	StateQuerier RPCStateQuerierI
+	StoreQuerier QGBStoreQuerierI
+	Broadcaster  BroadcasterI
+	Retrier      RetrierI
 }
 
 func NewOrchestrator(
 	logger tmlog.Logger,
-	querier RPCStateQuerierI,
+	stateQuerier RPCStateQuerierI,
+	storeQuerier QGBStoreQuerierI,
 	broadcaster BroadcasterI,
 	retrier RetrierI,
 	signer *paytypes.KeyringSigner,
@@ -68,7 +70,8 @@ func NewOrchestrator(
 		Signer:         signer,
 		EvmPrivateKey:  evmPrivateKey,
 		OrchEthAddress: orchEthAddr,
-		Querier:        querier,
+		StateQuerier:   stateQuerier,
+		StoreQuerier:   storeQuerier,
 		Broadcaster:    broadcaster,
 		Retrier:        retrier,
 		OrchAccAddress: orchAccAddr,
@@ -133,7 +136,7 @@ func (orch Orchestrator) StartNewEventsListener(
 	queue chan<- uint64,
 	signalChan <-chan struct{},
 ) error {
-	results, err := orch.Querier.SubscribeEvents(
+	results, err := orch.StateQuerier.SubscribeEvents(
 		ctx,
 		"attestation-changes",
 		fmt.Sprintf("%s.%s='%s'", types.EventTypeAttestationRequest, sdk.AttributeKeyModule, types.ModuleName),
@@ -176,12 +179,12 @@ func (orch Orchestrator) EnqueueMissingEvents(
 	queue chan<- uint64,
 	signalChan <-chan struct{},
 ) error {
-	latestNonce, err := orch.Querier.QueryLatestAttestationNonce(ctx)
+	latestNonce, err := orch.StateQuerier.QueryLatestAttestationNonce(ctx)
 	if err != nil {
 		return err
 	}
 
-	lastUnbondingHeight, err := orch.Querier.QueryLastUnbondingHeight(ctx)
+	lastUnbondingHeight, err := orch.StateQuerier.QueryLastUnbondingHeight(ctx)
 	if err != nil {
 		return err
 	}
@@ -236,7 +239,7 @@ func (orch Orchestrator) ProcessNonces(
 }
 
 func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
-	att, err := orch.Querier.QueryAttestationByNonce(ctx, nonce)
+	att, err := orch.StateQuerier.QueryAttestationByNonce(ctx, nonce)
 	if err != nil {
 		return err
 	}
@@ -245,39 +248,39 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 	}
 	// TODO uncomment this. Also, not check unless the ingestor finished ingesting all stuff
 	// check if the validator is part of the needed valset
-	//var previousValset *types.Valset
-	//if att.GetNonce() == 1 {
-	//	// if nonce == 1, then, the current valset should sign the confirm.
-	//	// In fact, the first nonce should never be signed. Because, the first attestation, in the case
-	//	// where the `earliest` flag is specified when deploying the contract, will be relayed as part of
-	//	// the deployment of the QGB contract.
-	//	// It will be signed temporarily for now.
-	//	previousValset, err = orch.RPCStateQuerierI.QueryValsetByNonce(ctx, att.GetNonce())
-	//	if err != nil {
-	//		return err
-	//	}
-	//} else {
-	//	previousValset, err = orch.RPCStateQuerierI.QueryLastValsetBeforeNonce(ctx, att.GetNonce())
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	//if !keeper.ValidatorPartOfValset(previousValset.Members, orch.OrchEthAddress.Hex()) {
-	//	// no need to sign if the orchestrator is not part of the validator set that needs to sign the attestation
-	//	orch.Logger.Debug("validator not part of valset. won't sign", "nonce", nonce)
-	//	return nil
-	//}
+	var previousValset *types.Valset
+	if att.GetNonce() == 1 {
+		// if nonce == 1, then, the current valset should sign the confirm.
+		// In fact, the first nonce should never be signed. Because, the first attestation, in the case
+		// where the `earliest` flag is specified when deploying the contract, will be relayed as part of
+		// the deployment of the QGB contract.
+		// It will be signed temporarily for now.
+		previousValset, err = orch.StateQuerier.QueryValsetByNonce(ctx, att.GetNonce())
+		if err != nil {
+			return err
+		}
+	} else {
+		previousValset, err = orch.StateQuerier.QueryLastValsetBeforeNonce(ctx, att.GetNonce())
+		if err != nil {
+			return err
+		}
+	}
+	if !ValidatorPartOfValset(previousValset.Members, orch.OrchEthAddress.Hex()) {
+		// no need to sign if the orchestrator is not part of the validator set that needs to sign the attestation
+		orch.Logger.Debug("validator not part of valset. won't sign", "nonce", nonce)
+		return nil
+	}
 	switch att.Type() {
 	case types.ValsetRequestType:
 		vs, ok := att.(*types.Valset)
 		if !ok {
 			return errors.Wrap(types.ErrAttestationNotValsetRequest, strconv.FormatUint(nonce, 10))
 		}
-		resp, err := orch.Querier.QueryValsetConfirm(ctx, nonce, orch.OrchAccAddress.String())
+		resp, err := orch.StoreQuerier.QueryValsetConfirmByOrchestratorAddress(ctx, nonce, orch.OrchAccAddress.String())
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("valset %d", nonce))
 		}
-		if resp != nil {
+		if !IsEmptyMsgValsetConfirm(resp) {
 			orch.Logger.Debug("already signed valset", "nonce", nonce, "signature", resp.Signature)
 			return nil
 		}
@@ -292,16 +295,15 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 		if !ok {
 			return errors.Wrap(types.ErrAttestationNotDataCommitmentRequest, strconv.FormatUint(nonce, 10))
 		}
-		resp, err := orch.Querier.QueryDataCommitmentConfirm(
+		resp, err := orch.StoreQuerier.QueryDataCommitmentConfirmByOrchestratorAddress(
 			ctx,
-			dc.EndBlock,
-			dc.BeginBlock,
+			dc.Nonce,
 			orch.OrchAccAddress.String(),
 		)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("data commitment %d", nonce))
 		}
-		if resp != nil {
+		if !IsEmptyMsgDataCommitmentConfirm(resp) {
 			orch.Logger.Debug("already signed data commitment", "nonce", nonce, "begin_block", resp.BeginBlock, "end_block", resp.EndBlock, "commitment", resp.Commitment, "signature", resp.Signature)
 			return nil
 		}
@@ -345,7 +347,7 @@ func (orch Orchestrator) ProcessDataCommitmentEvent(
 	ctx context.Context,
 	dc types.DataCommitment,
 ) error {
-	commitment, err := orch.Querier.QueryCommitment(
+	commitment, err := orch.StateQuerier.QueryCommitment(
 		ctx,
 		dc.BeginBlock,
 		dc.EndBlock,
@@ -511,4 +513,13 @@ func MustGetEvent(result corerpctypes.ResultEvent, eventName string) []string {
 		))
 	}
 	return ev
+}
+
+func ValidatorPartOfValset(members []types.BridgeValidator, ethAddr string) bool {
+	for _, val := range members {
+		if val.EthereumAddress == ethAddr {
+			return true
+		}
+	}
+	return false
 }
