@@ -15,6 +15,7 @@ type IndexerI interface {
 
 var _ IndexerI = &InMemoryIndexer{}
 
+// TODO update name to InMemoryQGBIndexer
 type InMemoryIndexer struct {
 	Store *InMemoryQGBStore
 }
