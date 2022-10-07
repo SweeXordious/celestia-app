@@ -5,6 +5,7 @@ import "github.com/celestiaorg/celestia-app/x/qgb/types"
 type QGBLoaderI interface {
 	Start() error
 	Stop() error
+	// TODO probably add context to these (after adding a DB and seeing if needed)
 	GetDataCommitmentConfirms(nonce uint64) ([]types.MsgDataCommitmentConfirm, error)
 	GetDataCommitmentConfirmByOrchestratorAddress(nonce uint64, orch string) (types.MsgDataCommitmentConfirm, error)
 	GetDataCommitmentConfirmByEthereumAddress(nonce uint64, ethAddr string) (types.MsgDataCommitmentConfirm, error)

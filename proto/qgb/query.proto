@@ -66,6 +66,7 @@ message QueryLatestAttestationNonceRequest {}
 // QueryLatestAttestationNonceResponse latest attestation nonce response
 message QueryLatestAttestationNonceResponse { uint64 nonce = 1; }
 
+// TODO remove
 // QueryLastValsetRequestBeforeNonceRequest last Valset request before universal
 // nonce request
 message QueryLastValsetRequestBeforeNonceRequest { uint64 nonce = 1; }

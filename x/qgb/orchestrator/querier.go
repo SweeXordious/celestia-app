@@ -464,6 +464,8 @@ func (q RPCStateQuerier) QueryDataCommitmentByNonce(ctx context.Context, nonce u
 	return dcc, nil
 }
 
+// QueryAttestationByNonce Queries the attestation with nonce `nonce.
+// Returns nil if not found.
 func (q RPCStateQuerier) QueryAttestationByNonce(
 	ctx context.Context,
 	nonce uint64,
