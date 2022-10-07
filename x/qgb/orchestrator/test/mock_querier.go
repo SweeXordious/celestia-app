@@ -2,8 +2,6 @@ package test
 
 import (
 	"context"
-	"time"
-
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	"github.com/tendermint/tendermint/libs/bytes"
@@ -27,34 +25,34 @@ func NewMockQuerier(confirms []types.MsgDataCommitmentConfirm, height uint64) *m
 func (q *mockQuerier) Stop() {
 }
 
-func (q *mockQuerier) QueryDataCommitmentConfirms(
-	ctx context.Context,
-	commit string,
-) ([]types.MsgDataCommitmentConfirm, error) {
-	confirms := make([]types.MsgDataCommitmentConfirm, 0)
-	for _, confirm := range q.confirms {
-		if confirm.Commitment == commit {
-			confirms = append(confirms, confirm)
-		}
-	}
-	return confirms, nil
-}
-
-func (q *mockQuerier) QueryTwoThirdsDataCommitmentConfirms(
-	ctx context.Context,
-	timeout time.Duration,
-	dc types.DataCommitment,
-) ([]types.MsgDataCommitmentConfirm, error) {
-	return nil, nil //nolint:nilnil
-}
-
-func (q *mockQuerier) QueryTwoThirdsValsetConfirms(
-	ctx context.Context,
-	timeout time.Duration,
-	valset types.Valset,
-) ([]types.MsgValsetConfirm, error) {
-	return nil, nil //nolint:nilnil
-}
+//func (q *mockQuerier) QueryDataCommitmentConfirms(
+//	ctx context.Context,
+//	commit string,
+//) ([]types.MsgDataCommitmentConfirm, error) {
+//	confirms := make([]types.MsgDataCommitmentConfirm, 0)
+//	for _, confirm := range q.confirms {
+//		if confirm.Commitment == commit {
+//			confirms = append(confirms, confirm)
+//		}
+//	}
+//	return confirms, nil
+//}
+//
+//func (q *mockQuerier) QueryTwoThirdsDataCommitmentConfirms(
+//	ctx context.Context,
+//	timeout time.Duration,
+//	dc types.DataCommitment,
+//) ([]types.MsgDataCommitmentConfirm, error) {
+//	return nil, nil //nolint:nilnil
+//}
+//
+//func (q *mockQuerier) QueryTwoThirdsValsetConfirms(
+//	ctx context.Context,
+//	timeout time.Duration,
+//	valset types.Valset,
+//) ([]types.MsgValsetConfirm, error) {
+//	return nil, nil //nolint:nilnil
+//}
 
 // QueryLastValsetBeforeNonce returns the last valset before nonce.
 // the provided `nonce` can be a valset, but this will return the valset before it.
@@ -79,22 +77,22 @@ func (q *mockQuerier) QueryLastUnbondingHeight(ctx context.Context) (uint64, err
 	return 0, nil
 }
 
-func (q *mockQuerier) QueryDataCommitmentConfirm(
-	ctx context.Context,
-	endBlock uint64,
-	beginBlock uint64,
-	address string,
-) (*types.MsgDataCommitmentConfirm, error) {
-	return nil, nil //nolint:nilnil
-}
-
-func (q *mockQuerier) QueryDataCommitmentConfirmsByExactRange(
-	ctx context.Context,
-	start uint64,
-	end uint64,
-) ([]types.MsgDataCommitmentConfirm, error) {
-	return nil, nil //nolint:nilnil
-}
+//func (q *mockQuerier) QueryDataCommitmentConfirmByOrchestratorAddress(
+//	ctx context.Context,
+//	endBlock uint64,
+//	beginBlock uint64,
+//	address string,
+//) (*types.MsgDataCommitmentConfirm, error) {
+//	return nil, nil //nolint:nilnil
+//}
+//
+//func (q *mockQuerier) QueryDataCommitmentConfirmsByExactRange(
+//	ctx context.Context,
+//	start uint64,
+//	end uint64,
+//) ([]types.MsgDataCommitmentConfirm, error) {
+//	return nil, nil //nolint:nilnil
+//}
 
 func (q *mockQuerier) QueryDataCommitmentByNonce(ctx context.Context, nonce uint64) (*types.DataCommitment, error) {
 	return nil, nil //nolint:nilnil
