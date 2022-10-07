@@ -12,6 +12,35 @@ import (
 )
 
 type QGBStoreQuerierI interface {
+	// TODO add docs same as qgb_store
+	QueryTwoThirdsDataCommitmentConfirms(
+		ctx context.Context,
+		timeout time.Duration,
+		dc types.DataCommitment,
+	) ([]types.MsgDataCommitmentConfirm, error)
+	QueryTwoThirdsValsetConfirms(
+		ctx context.Context,
+		timeout time.Duration,
+		valset types.Valset,
+	) ([]types.MsgValsetConfirm, error)
+	QueryValsetConfirmByOrchestratorAddress(
+		ctx context.Context,
+		nonce uint64,
+		address string,
+	) (types.MsgValsetConfirm, error)
+	QueryDataCommitmentConfirmByOrchestratorAddress(
+		ctx context.Context,
+		nonce uint64,
+		address string,
+	) (types.MsgDataCommitmentConfirm, error)
+	QueryDataCommitmentConfirms(
+		ctx context.Context,
+		nonce uint64,
+	) ([]types.MsgDataCommitmentConfirm, error)
+	QueryValsetConfirms(
+		ctx context.Context,
+		nonce uint64,
+	) ([]types.MsgValsetConfirm, error)
 }
 
 type QGBStoreQuerier struct {
