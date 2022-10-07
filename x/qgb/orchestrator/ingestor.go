@@ -36,7 +36,7 @@ func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, quer
 	}, nil
 }
 
-func (ingestor Ingestor) Start(ctx context.Context) error {
+func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan chan<- struct{}) error {
 	// is it better for this channel to contain pointers or values?
 	heightsChan := make(chan *int64, ingestor.workers*100)
 	defer close(heightsChan)
@@ -79,6 +79,7 @@ func (ingestor Ingestor) Start(ctx context.Context) error {
 			ingestor.Logger.Error("error enqueing missing blocks", "err", err)
 			cancel()
 		}
+		enqueueMissingSignalChan <- struct{}{}
 		ingestor.Logger.Error("stopping enqueing missing blocks")
 	}()
 
