@@ -45,7 +45,7 @@ type QGBStoreQuerierI interface {
 
 type QGBStoreQuerier struct {
 	logger       tmlog.Logger
-	StoreLoader  InMemoryQGBLoader
+	StoreLoader  QGBLoaderI
 	StateQuerier RPCStateQuerierI // TODO remove if https://github.com/celestiaorg/celestia-app/issues/843
 	// got accepted
 }
