@@ -3,6 +3,7 @@ package orchestrator
 import "github.com/celestiaorg/celestia-app/x/qgb/types"
 
 type QGBLoaderI interface {
+	// TODO add docs same as qgb_store
 	Start() error
 	Stop() error
 	// TODO probably add context to these (after adding a DB and seeing if needed)
