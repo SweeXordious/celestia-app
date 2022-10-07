@@ -241,6 +241,7 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 	if att == nil {
 		return types.ErrAttestationNotFound
 	}
+	// TODO uncomment this. Also, not check unless the ingestor finished ingesting all stuff
 	// check if the validator is part of the needed valset
 	//var previousValset *types.Valset
 	//if att.GetNonce() == 1 {

@@ -42,7 +42,7 @@ type Querier interface {
 		beginBlock uint64,
 		address string,
 	) (*types.MsgDataCommitmentConfirm, error)
-	QueryDataCommitmentConfirmsByExactRange(
+	QueryDataCommitmentConfirmsByExactRange( // TODO can be done using nonces better
 		ctx context.Context,
 		start uint64,
 		end uint64,

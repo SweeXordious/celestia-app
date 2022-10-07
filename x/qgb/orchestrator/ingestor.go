@@ -118,7 +118,7 @@ func (ingestor Ingestor) StartNewBlocksListener(
 			select {
 			case <-signalChan:
 				return nil
-			case heights <- &height: // this is missing blocks when channel is full
+			case heights <- &height: // TODO this is missing blocks when channel is full
 			}
 		}
 	}
@@ -149,6 +149,7 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 		case <-ctx.Done():
 			return nil
 		default:
+			// TODO only log every 500 block or so
 			ingestor.Logger.Debug("enqueueing missing block height", "height", chainHeight-i)
 			select {
 			case <-signalChan:
@@ -164,7 +165,7 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, signalChan <-chan struct{}) error {
 	for {
 		select {
-		// add signal and stuff
+		// TODO add signal and stuff
 		case height := <-heightChan:
 			block, err := ingestor.extractor.ExtractBlock(ctx, height)
 			if err != nil {
@@ -173,6 +174,7 @@ func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, s
 			for _, coreTx := range block.Block.Txs {
 				sdkTx, err := ingestor.parser.ParseCoreTx(coreTx)
 				if err != nil {
+					// TODO concrete errors everywhere
 					return fmt.Errorf("error while unpacking message: %s", err)
 				}
 				for _, msg := range sdkTx.Body.Messages {
@@ -208,6 +210,7 @@ func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, s
 							return err
 						}
 					}
+					// TODO handle errors in a retrier
 				}
 			}
 			ingestor.indexer.AddHeight(*height) // handle error

@@ -9,6 +9,7 @@ import (
 
 // TODO add unit tests for all of these requests
 
+// TODO delete this and corresponding proto
 // LastValsetRequestBeforeNonce queries the last valset request before nonce
 func (k Keeper) LastValsetRequestBeforeNonce(
 	c context.Context,
