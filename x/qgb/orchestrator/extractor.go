@@ -59,6 +59,7 @@ func (extractor RPCExtractor) SubscribeNewBlocks(ctx context.Context, subscripti
 		ctx,
 		subscriptionName,
 		"tm.event = 'NewBlock'",
+		200,
 	)
 	if err != nil {
 		return nil, err
