@@ -36,7 +36,7 @@ func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, quer
 	}, nil
 }
 
-func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan chan<- struct{}) error {
+func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan chan<- struct{}, signalChan chan struct{}) error {
 	// is it better for this channel to contain pointers or values?
 	heightsChan := make(chan *int64, ingestor.workers*100)
 	defer close(heightsChan)
@@ -45,12 +45,9 @@ func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan cha
 
 	wg := &sync.WaitGroup{}
 
-	// used to send a signal when a worker wants to notify the enqueuing services to stop.
-	signalChan := make(chan struct{})
-
 	for i := 0; i < ingestor.workers; i++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			defer wg.Done()
 			err := ingestor.Ingest(ctx, heightsChan, signalChan)
 			if err != nil {
@@ -162,9 +159,14 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 	return nil
 }
 
-func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, signalChan <-chan struct{}) error {
+func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, signalChan chan struct{}) error {
 	for {
 		select {
+		case <-signalChan:
+			return nil
+		case <-ctx.Done():
+			//close(signalChan)
+			return nil
 		// TODO add signal and stuff
 		case height := <-heightChan:
 			block, err := ingestor.extractor.ExtractBlock(ctx, height)
@@ -213,7 +215,10 @@ func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, s
 					// TODO handle errors in a retrier
 				}
 			}
-			ingestor.indexer.AddHeight(*height) // handle error
+			err = ingestor.indexer.AddHeight(*height)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }

@@ -26,7 +26,7 @@ import (
 var _ I = &Orchestrator{}
 
 type I interface {
-	Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{})
+	Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{}, signalChan chan struct{})
 	StartNewEventsListener(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
 	EnqueueMissingEvents(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
 	ProcessNonces(ctx context.Context, noncesQueue <-chan uint64, signalChan chan<- struct{}) error
@@ -78,7 +78,7 @@ func NewOrchestrator(
 	}, nil
 }
 
-func (orch Orchestrator) Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{}) {
+func (orch Orchestrator) Start(ctx context.Context, enqueueMissingBlockSignal <-chan struct{}, signalChan chan struct{}) {
 	<-enqueueMissingBlockSignal
 
 	// contains the nonces that will be signed by the orchestrator.
@@ -86,7 +86,7 @@ func (orch Orchestrator) Start(ctx context.Context, enqueueMissingBlockSignal <-
 	defer close(noncesQueue)
 
 	// used to send a signal when the nonces processor wants to notify the nonces enqueuing services to stop.
-	signalChan := make(chan struct{})
+	//signalChan := make(chan struct{})
 
 	withCancel, cancel := context.WithCancel(ctx)
 
@@ -223,7 +223,7 @@ func (orch Orchestrator) ProcessNonces(
 	for {
 		select {
 		case <-ctx.Done():
-			close(signalChan)
+			//close(signalChan) // TODO investigate if this is needed
 			return nil
 		case nonce := <-noncesQueue:
 			orch.Logger.Debug("processing nonce", "nonce", nonce)
