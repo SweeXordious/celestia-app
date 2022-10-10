@@ -36,6 +36,7 @@ func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, quer
 	}, nil
 }
 
+// TODO the enqueuMissingSignalChan is ugly, remove it. also the signal kinda.
 func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan chan<- struct{}, signalChan chan struct{}) error {
 	// is it better for this channel to contain pointers or values?
 	heightsChan := make(chan *int64, ingestor.workers*100)
@@ -57,27 +58,33 @@ func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan cha
 		}()
 	}
 
+	currentHeight, err := ingestor.extractor.QueryHeight(ctx)
+	if err != nil {
+		cancel()
+		return err
+	}
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := ingestor.StartNewBlocksListener(withCancel, heightsChan, signalChan)
+		err := ingestor.StartNewBlocksListener(withCancel, heightsChan, currentHeight, signalChan)
 		if err != nil {
 			ingestor.Logger.Error("error listening to new blocks", "err", err)
 			cancel()
 		}
-		ingestor.Logger.Error("stopping listening to new blocks")
+		ingestor.Logger.Info("stopping listening to new blocks")
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := ingestor.EnqueueMissingBlockHeights(withCancel, heightsChan, signalChan)
+		err := ingestor.EnqueueMissingBlockHeights(withCancel, heightsChan, currentHeight, signalChan)
 		if err != nil {
 			ingestor.Logger.Error("error enqueing missing blocks", "err", err)
 			cancel()
 		}
 		enqueueMissingSignalChan <- struct{}{}
-		ingestor.Logger.Error("stopping enqueing missing blocks")
+		ingestor.Logger.Info("stopping enqueing missing blocks")
 	}()
 
 	wg.Wait()
@@ -88,6 +95,7 @@ func (ingestor Ingestor) Start(ctx context.Context, enqueueMissingSignalChan cha
 func (ingestor Ingestor) StartNewBlocksListener(
 	ctx context.Context,
 	heights chan<- *int64,
+	currentHeight int64,
 	signalChan <-chan struct{},
 ) error {
 	results, err := ingestor.extractor.SubscribeNewBlocks(ctx, "new-blocks-updates")
@@ -108,15 +116,19 @@ func (ingestor Ingestor) StartNewBlocksListener(
 				continue
 			}
 			height, err := ingestor.extractor.QueryHeight(ctx)
+			ingestor.Logger.Debug("queried height", "height", height)
 			if err != nil {
 				return err
 			}
-			ingestor.Logger.Debug("enqueueing new block height", "height", height)
-			select {
-			case <-signalChan:
-				return nil
-			case heights <- &height: // TODO this is missing blocks when channel is full
+			for i := currentHeight; i <= height; i++ {
+				ingestor.Logger.Debug("enqueueing new block height", "height", i)
+				select {
+				case <-signalChan:
+					return nil
+				case heights <- &i: // TODO this is missing blocks when channel is full
+				}
 			}
+			currentHeight = height
 		}
 	}
 }
@@ -124,22 +136,18 @@ func (ingestor Ingestor) StartNewBlocksListener(
 func (ingestor Ingestor) EnqueueMissingBlockHeights(
 	ctx context.Context,
 	heights chan<- *int64,
+	currentHeight int64,
 	signalChan <-chan struct{},
 ) error {
-	chainHeight, err := ingestor.extractor.QueryHeight(ctx)
-	if err != nil {
-		return err
-	}
-
 	lastUnbondingHeight, err := ingestor.Querier.QueryLastUnbondingHeight(ctx)
 	if err != nil {
 		return err
 	}
 
-	ingestor.Logger.Info("syncing missing block heights", "chain_height", chainHeight, "last_unbonding_height", lastUnbondingHeight)
+	ingestor.Logger.Info("syncing missing block heights", "chain_height", currentHeight, "last_unbonding_height", lastUnbondingHeight)
 
-	for i := int64(lastUnbondingHeight); i < chainHeight; i++ {
-		height := chainHeight - i
+	for i := int64(lastUnbondingHeight); i < currentHeight; i++ {
+		height := currentHeight - i
 		select {
 		case <-signalChan:
 			return nil
@@ -147,7 +155,7 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 			return nil
 		default:
 			// TODO only log every 500 block or so
-			ingestor.Logger.Debug("enqueueing missing block height", "height", chainHeight-i)
+			ingestor.Logger.Debug("enqueueing missing block height", "height", currentHeight-i)
 			select {
 			case <-signalChan:
 				return nil
@@ -155,7 +163,7 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 			}
 		}
 	}
-	ingestor.Logger.Info("finished syncing missing block heights", "chain_height", chainHeight, "last_unbonding_height", lastUnbondingHeight)
+	ingestor.Logger.Info("finished syncing missing block heights", "chain_height", currentHeight, "last_unbonding_height", lastUnbondingHeight)
 	return nil
 }
 
