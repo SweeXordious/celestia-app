@@ -128,6 +128,12 @@ func OrchCmd() *cobra.Command {
 
 // trapSignal will listen for any OS signal and gracefully exit.
 func trapSignal(logger tmlog.Logger, cancel context.CancelFunc) {
+	// TODO investigate why the following doesn't exit:
+	// - running orchestrator
+	// - stopping celestia-appd node
+	// - letting the orchestrator retry once
+	// - ctrl-c the orchestrator
+	// - even tho the services are killed and the interruption is captured. It hangs.
 	sigCh := make(chan os.Signal, 1)
 
 	signal.Notify(sigCh, syscall.SIGTERM)
