@@ -2,17 +2,17 @@ package orchestrator
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	paytypes "github.com/celestiaorg/celestia-app/x/payment/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/spf13/cobra"
 	tmlog "github.com/tendermint/tendermint/libs/log"
+	"os"
+	"os/signal"
+	"strings"
+	"sync"
+	"syscall"
 )
 
 func OrchCmd() *cobra.Command {
@@ -32,7 +32,7 @@ func OrchCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				panic(err)
 			}
@@ -54,10 +54,15 @@ func OrchCmd() *cobra.Command {
 				panic(err)
 			}
 
+			store := NewInMemoryQGBStore()
+			loader := NewInMemoryLoader(*store)
+			storeQuerier := NewQGBStoreQuerier(logger, loader, querier)
+
 			retrier := NewRetrier(logger, 5)
 			orch, err := NewOrchestrator(
 				logger,
 				querier,
+				storeQuerier,
 				broadcaster,
 				retrier,
 				signer,
@@ -72,8 +77,44 @@ func OrchCmd() *cobra.Command {
 			// Listen for and trap any OS signal to gracefully shutdown and exit
 			go trapSignal(logger, cancel)
 
-			orch.Start(ctx)
+			extractor, err := NewRPCExtractor(config.tendermintRPC)
+			if err != nil {
+				return err
+			}
 
+			enqueueSignalChan := make(chan struct{}, 1)
+
+			ingestor, err := NewIngestor(extractor, NewQGBParser(MakeDefaultAppCodec()),
+				NewInMemoryIndexer(store), querier, logger, 16, // make workers in config (default to number of threads or CPUs)
+			)
+			if err != nil {
+				return err
+			}
+
+			// used to send a signal when a worker wants to notify the enqueuing services to stop.
+			signalChan := make(chan struct{})
+
+			// TODO kill processes
+
+			wg := &sync.WaitGroup{}
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// TODO handle error
+				// TODO no enqueueSignalChan and signalChan in params
+				_ = ingestor.Start(ctx, enqueueSignalChan, signalChan)
+			}()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// TODO handle error and return != 0
+				// TODO no signalChan and enqueueSignalChan in params
+				orch.Start(ctx, enqueueSignalChan, signalChan)
+			}()
+
+			wg.Wait()
 			return nil
 		},
 	}
