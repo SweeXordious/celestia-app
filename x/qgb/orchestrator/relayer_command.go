@@ -65,6 +65,7 @@ func RelayerCmd() *cobra.Command {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				// TODO move this to a right coordination place
 				for {
 					select {
 					case <-cmd.Context().Done():
@@ -80,6 +81,25 @@ func RelayerCmd() *cobra.Command {
 					}
 				}
 			}()
+
+			extractor, err := NewRPCExtractor(config.tendermintRPC)
+
+			enqueueSignalChan := make(chan struct{}, 1)
+
+			signalChan := make(chan struct{})
+
+			ingestor, err := NewIngestor(extractor, NewQGBParser(MakeDefaultAppCodec()),
+				NewInMemoryIndexer(store), querier, logger, 16, // make workers in config (default to number of CPUs/threads)
+			)
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// TODO no enqueueSignalChan and signalChan
+				// TODO handle error and return != 0
+				_ = ingestor.Start(cmd.Context(), enqueueSignalChan, signalChan)
+			}()
+
 			wg.Wait()
 			return nil
 		},
