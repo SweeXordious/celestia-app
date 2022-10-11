@@ -1,10 +1,14 @@
-package orchestrator
+package cmd
 
 import (
 	"context"
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	paytypes "github.com/celestiaorg/celestia-app/x/payment/types"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/ingestion"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/spf13/cobra"
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -32,7 +36,7 @@ func OrchCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				panic(err)
 			}
@@ -49,17 +53,17 @@ func OrchCmd() *cobra.Command {
 				config.celestiaChainID,
 			)
 
-			broadcaster, err := NewBroadcaster(config.celesGRPC, signer, config.celestiaGasLimit)
+			broadcaster, err := orchestrator.NewBroadcaster(config.celesGRPC, signer, config.celestiaGasLimit)
 			if err != nil {
 				panic(err)
 			}
 
-			store := NewInMemoryQGBStore()
-			loader := NewInMemoryLoader(*store)
-			storeQuerier := NewQGBStoreQuerier(logger, loader, querier)
+			inMemoryStore := store.NewInMemoryQGBStore()
+			loader := store.NewInMemoryLoader(*inMemoryStore)
+			storeQuerier := api.NewQGBStoreQuerier(logger, loader, querier)
 
-			retrier := NewRetrier(logger, 5)
-			orch, err := NewOrchestrator(
+			retrier := orchestrator.NewRetrier(logger, 5)
+			orch, err := orchestrator.NewOrchestrator(
 				logger,
 				querier,
 				storeQuerier,
@@ -77,15 +81,15 @@ func OrchCmd() *cobra.Command {
 			// Listen for and trap any OS signal to gracefully shutdown and exit
 			go trapSignal(logger, cancel)
 
-			extractor, err := NewRPCExtractor(config.tendermintRPC)
+			extractor, err := ingestion.NewRPCExtractor(config.tendermintRPC)
 			if err != nil {
 				return err
 			}
 
 			enqueueSignalChan := make(chan struct{}, 1)
 
-			ingestor, err := NewIngestor(extractor, NewQGBParser(MakeDefaultAppCodec()),
-				NewInMemoryIndexer(store), querier, logger, 16, // make workers in config (default to number of threads or CPUs)
+			ingestor, err := ingestion.NewIngestor(extractor, ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
+				ingestion.NewInMemoryIndexer(inMemoryStore), querier, logger, 16, // make workers in config (default to number of threads or CPUs)
 			)
 			if err != nil {
 				return err

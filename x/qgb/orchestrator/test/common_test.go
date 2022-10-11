@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"os"
 	"sync"
 	"testing"
@@ -27,9 +29,14 @@ func setupTestOrchestrator(t *testing.T, bc orchestrator.BroadcasterI) *orchestr
 		0)
 	mockRetier := NewMockRetrier()
 
+	logger := tmlog.NewTMLogger(os.Stdout)
+	inMemoryStore := store.NewInMemoryQGBStore() // TODO use this for testing? or mock?
+	loader := store.NewInMemoryLoader(*inMemoryStore)
+	storeQuerier := api.NewQGBStoreQuerier(logger, loader, mockQuerier)
 	orch, err := orchestrator.NewOrchestrator(
-		tmlog.NewTMLogger(os.Stdout),
+		logger,
 		mockQuerier,
+		storeQuerier,
 		bc,
 		mockRetier,
 		testutil.GenerateKeyringSigner(t, testutil.TestAccName),

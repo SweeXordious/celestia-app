@@ -2,11 +2,12 @@ package e2e
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestFullLongBehaviour(t *testing.T) {
 	HandleNetworkError(t, network, err, false)
 
 	// check whether the four validators are up and running
-	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := api.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	// check whether all the validators are up and running
@@ -50,7 +51,7 @@ func TestFullLongBehaviour(t *testing.T) {
 	bridge, err := network.GetLatestDeployedQGBContract(ctx)
 	HandleNetworkError(t, network, err, false)
 
-	evmClient := orchestrator.NewEvmClient(nil, bridge, nil, network.EVMRPC, orchestrator.DEFAULTEVMGASLIMIT)
+	evmClient := evm.NewEvmClient(nil, bridge, nil, network.EVMRPC, evm.DEFAULTEVMGASLIMIT)
 
 	// check whether the relayer relayed all attestations
 	eventNonce, err := evmClient.StateLastEventNonce(&bind.CallOpts{Context: ctx})

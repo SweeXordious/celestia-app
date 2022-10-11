@@ -1,5 +1,6 @@
-package orchestrator
+package utils
 
+// TODO check if can be deleted
 //const (
 //	// EthSignPrefix is used to mimic the expected encoding. see
 //	// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c9f328ef66251db7fac7c704dd6c5523fc53b0ab/contracts/cryptography/ECDSA.sol#L69-L82 //nolint:lll

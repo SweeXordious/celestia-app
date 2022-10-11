@@ -3,10 +3,11 @@ package test
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"math/big"
 	"testing"
 
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	wrapper "github.com/celestiaorg/quantum-gravity-bridge/wrappers/QuantumGravityBridge.sol"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -91,13 +92,13 @@ func (s *QGBTestSuite) SetupTest() {
 func (s *QGBTestSuite) TestSubmitDataCommitment() {
 	// we just need something to sign over, it doesn't matter what
 	commitment := ethcmn.HexToHash(types.ValidatorSetDomainSeparator)
-	signBytes := orchestrator.DataCommitmentTupleRootSignBytes(
+	signBytes := utils.DataCommitmentTupleRootSignBytes(
 		bID,
 		big.NewInt(1),
 		commitment[:],
 	)
 
-	signature, err := orchestrator.NewEthereumSignature(signBytes.Bytes(), s.key)
+	signature, err := evm.NewEthereumSignature(signBytes.Bytes(), s.key)
 	s.NoError(err)
 
 	ethVals := make([]wrapper.Validator, len(initialValSet.Members))
@@ -109,7 +110,7 @@ func (s *QGBTestSuite) TestSubmitDataCommitment() {
 	}
 
 	hexSig := ethcmn.Bytes2Hex(signature)
-	v, r, ss := orchestrator.SigToVRS(hexSig)
+	v, r, ss := evm.SigToVRS(hexSig)
 	tx, err := s.wrapper.SubmitDataRootTupleRoot(
 		s.auth,
 		big.NewInt(1),
@@ -156,7 +157,7 @@ func (s *QGBTestSuite) TestUpdateValset() {
 	s.NoError(err)
 	signBytes, err := updatedValset.SignBytes(bID)
 	s.NoError(err)
-	signature, err := orchestrator.NewEthereumSignature(signBytes.Bytes(), s.key)
+	signature, err := evm.NewEthereumSignature(signBytes.Bytes(), s.key)
 	s.NoError(err)
 
 	hexSig := ethcmn.Bytes2Hex(signature)
@@ -174,7 +175,7 @@ func (s *QGBTestSuite) TestUpdateValset() {
 	err = s.updateNonce()
 	s.Require().NoError(err)
 
-	v, r, ss := orchestrator.SigToVRS(hexSig)
+	v, r, ss := evm.SigToVRS(hexSig)
 
 	tx, err := s.wrapper.UpdateValidatorSet(
 		s.auth,

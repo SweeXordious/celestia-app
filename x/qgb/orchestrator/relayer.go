@@ -3,6 +3,8 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"time"
 
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -14,14 +16,14 @@ import (
 )
 
 type Relayer struct {
-	StateQuerier RPCStateQuerierI
-	StoreQuerier QGBStoreQuerierI
-	evmClient    EVMClient
+	StateQuerier api.RPCStateQuerierI
+	StoreQuerier api.QGBStoreQuerierI
+	evmClient    evm.EVMClient
 	bridgeID     ethcmn.Hash
 	logger       tmlog.Logger
 }
 
-func NewRelayer(stateQuerier RPCStateQuerierI, storeQuerier QGBStoreQuerierI, evmClient EVMClient, logger tmlog.Logger) (*Relayer, error) {
+func NewRelayer(stateQuerier api.RPCStateQuerierI, storeQuerier api.QGBStoreQuerierI, evmClient evm.EVMClient, logger tmlog.Logger) (*Relayer, error) {
 	return &Relayer{
 		StateQuerier: stateQuerier,
 		StoreQuerier: storeQuerier,
@@ -31,7 +33,7 @@ func NewRelayer(stateQuerier RPCStateQuerierI, storeQuerier QGBStoreQuerierI, ev
 	}, nil
 }
 
-func (r *Relayer) processEvents(ctx context.Context) error {
+func (r *Relayer) ProcessEvents(ctx context.Context) error {
 	for {
 		lastContractNonce, err := r.evmClient.StateLastEventNonce(&bind.CallOpts{})
 		if err != nil {
@@ -197,7 +199,7 @@ func matchAttestationConfirmSigs(
 		if !has {
 			continue
 		}
-		v, r, s := SigToVRS(sig)
+		v, r, s := evm.SigToVRS(sig)
 
 		sigs[i] = wrapper.Signature{
 			V: v,

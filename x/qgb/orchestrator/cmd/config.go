@@ -1,9 +1,11 @@
-package orchestrator
+package cmd
 
 import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"log"
 	"os"
 	"path/filepath"
@@ -64,7 +66,7 @@ func addOrchestratorFlags(cmd *cobra.Command) *cobra.Command {
 		"",
 		"Specify the ECDSA private key used to sign orchestrator commitments in hex",
 	)
-	cmd.Flags().Uint64P(celestiaGasLimitFlag, "l", DEFAULTCELESTIAGASLIMIT, "Specify the celestia gas limit")
+	cmd.Flags().Uint64P(celestiaGasLimitFlag, "l", orchestrator.DEFAULTCELESTIAGASLIMIT, "Specify the celestia gas limit")
 
 	return cmd
 }
@@ -136,7 +138,7 @@ func addRelayerFlags(cmd *cobra.Command) *cobra.Command {
 	cmd.Flags().StringP(tendermintRPCFlag, "t", "http://localhost:26657", "Specify the rest rpc address")
 	cmd.Flags().StringP(evmRPCFlag, "e", "http://localhost:8545", "Specify the ethereum rpc address")
 	cmd.Flags().StringP(contractAddressFlag, "a", "", "Specify the contract at which the qgb is deployed")
-	cmd.Flags().Uint64P(evmGasLimitFlag, "l", DEFAULTEVMGASLIMIT, "Specify the evm gas limit")
+	cmd.Flags().Uint64P(evmGasLimitFlag, "l", evm.DEFAULTEVMGASLIMIT, "Specify the evm gas limit")
 
 	return cmd
 }
@@ -220,7 +222,7 @@ func addDeployFlags(cmd *cobra.Command) *cobra.Command {
 			"\"latest\": for latest valset nonce, "+
 			"\"nonce\": for the latest valset before the provided nonce, provided nonce included.",
 	)
-	cmd.Flags().Uint64P(evmGasLimitFlag, "l", DEFAULTEVMGASLIMIT, "Specify the evm gas limit")
+	cmd.Flags().Uint64P(evmGasLimitFlag, "l", evm.DEFAULTEVMGASLIMIT, "Specify the evm gas limit")
 
 	return cmd
 }

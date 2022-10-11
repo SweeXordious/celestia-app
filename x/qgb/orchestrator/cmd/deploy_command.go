@@ -1,7 +1,9 @@
-package orchestrator
+package cmd
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"os"
 	"strconv"
 
@@ -27,7 +29,7 @@ func DeployCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				return err
 			}
@@ -40,7 +42,7 @@ func DeployCmd() *cobra.Command {
 				)
 			}
 
-			evmClient := NewEvmClient(
+			evmClient := evm.NewEvmClient(
 				tmlog.NewTMLogger(os.Stdout),
 				nil,
 				config.privateKey,
@@ -68,7 +70,7 @@ func DeployCmd() *cobra.Command {
 	return addDeployFlags(command)
 }
 
-func getStartingValset(ctx context.Context, q *RPCStateQuerier, snonce string) (*types.Valset, error) {
+func getStartingValset(ctx context.Context, q *api.RPCStateQuerier, snonce string) (*types.Valset, error) {
 	switch snonce {
 	case "latest":
 		return q.QueryLatestValset(ctx)

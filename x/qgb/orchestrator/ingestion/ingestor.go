@@ -1,8 +1,10 @@
-package orchestrator
+package ingestion
 
 import (
 	"context"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	coretypes "github.com/tendermint/tendermint/types"
@@ -21,11 +23,11 @@ type Ingestor struct {
 	extractor ExtractorI
 	parser    QGBParserI
 	indexer   IndexerI
-	Querier   RPCStateQuerierI
+	Querier   api.RPCStateQuerierI
 	workers   int
 }
 
-func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, querier RPCStateQuerierI, logger tmlog.Logger, workers int) (*Ingestor, error) {
+func NewIngestor(extractor ExtractorI, parser QGBParserI, indexer IndexerI, querier api.RPCStateQuerierI, logger tmlog.Logger, workers int) (*Ingestor, error) {
 	return &Ingestor{
 		extractor: extractor,
 		parser:    parser,
@@ -110,7 +112,7 @@ func (ingestor Ingestor) StartNewBlocksListener(
 		case <-ctx.Done():
 			return nil
 		case result := <-results:
-			blockEvent := MustGetEvent(result, coretypes.EventTypeKey)
+			blockEvent := utils.MustGetEvent(result, coretypes.EventTypeKey)
 			isBlock := blockEvent[0] == coretypes.EventNewBlock
 			if !isBlock {
 				continue

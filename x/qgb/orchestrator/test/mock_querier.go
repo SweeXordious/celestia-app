@@ -2,13 +2,13 @@ package test
 
 import (
 	"context"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	"github.com/tendermint/tendermint/libs/bytes"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-var _ orchestrator.RPCStateQuerierI = &mockQuerier{}
+var _ api.RPCStateQuerierI = &mockQuerier{}
 
 type mockQuerier struct {
 	confirms []types.MsgDataCommitmentConfirm

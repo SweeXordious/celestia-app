@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"math/big"
 	"strconv"
 	"sync"
@@ -17,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
-	corerpctypes "github.com/tendermint/tendermint/rpc/core/types"
 	coretypes "github.com/tendermint/tendermint/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -43,16 +45,16 @@ type Orchestrator struct {
 	OrchEthAddress ethcmn.Address
 	OrchAccAddress sdk.AccAddress
 
-	StateQuerier RPCStateQuerierI
-	StoreQuerier QGBStoreQuerierI
+	StateQuerier api.RPCStateQuerierI
+	StoreQuerier api.QGBStoreQuerierI
 	Broadcaster  BroadcasterI
 	Retrier      RetrierI
 }
 
 func NewOrchestrator(
 	logger tmlog.Logger,
-	stateQuerier RPCStateQuerierI,
-	storeQuerier QGBStoreQuerierI,
+	stateQuerier api.RPCStateQuerierI,
+	storeQuerier api.QGBStoreQuerierI,
 	broadcaster BroadcasterI,
 	retrier RetrierI,
 	signer *paytypes.KeyringSigner,
@@ -153,13 +155,13 @@ func (orch Orchestrator) StartNewEventsListener(
 		case <-ctx.Done():
 			return nil
 		case result := <-results:
-			blockEvent := MustGetEvent(result, coretypes.EventTypeKey)
+			blockEvent := utils.MustGetEvent(result, coretypes.EventTypeKey)
 			isBlock := blockEvent[0] == coretypes.EventNewBlock
 			if !isBlock {
 				// we only want to handle the attestation when the block is committed
 				continue
 			}
-			attestationEvent := MustGetEvent(result, attestationEventName)
+			attestationEvent := utils.MustGetEvent(result, attestationEventName)
 			nonce, err := strconv.Atoi(attestationEvent[0])
 			if err != nil {
 				return err
@@ -280,7 +282,7 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("valset %d", nonce))
 		}
-		if !IsEmptyMsgValsetConfirm(resp) {
+		if !utils.IsEmptyMsgValsetConfirm(resp) {
 			orch.Logger.Debug("already signed valset", "nonce", nonce, "signature", resp.Signature)
 			return nil
 		}
@@ -303,7 +305,7 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64) error {
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("data commitment %d", nonce))
 		}
-		if !IsEmptyMsgDataCommitmentConfirm(resp) {
+		if !utils.IsEmptyMsgDataCommitmentConfirm(resp) {
 			orch.Logger.Debug("already signed data commitment", "nonce", nonce, "begin_block", resp.BeginBlock, "end_block", resp.EndBlock, "commitment", resp.Commitment, "signature", resp.Signature)
 			return nil
 		}
@@ -323,13 +325,13 @@ func (orch Orchestrator) ProcessValsetEvent(ctx context.Context, valset types.Va
 	if err != nil {
 		return err
 	}
-	signature, err := NewEthereumSignature(signBytes.Bytes(), &orch.EvmPrivateKey)
+	signature, err := evm.NewEthereumSignature(signBytes.Bytes(), &orch.EvmPrivateKey)
 	if err != nil {
 		return err
 	}
 
 	// create and send the valset hash
-	msg := NewMsgValsetConfirm(
+	msg := utils.NewMsgValsetConfirm(
 		valset.Nonce,
 		orch.OrchEthAddress,
 		orch.OrchAccAddress,
@@ -355,13 +357,13 @@ func (orch Orchestrator) ProcessDataCommitmentEvent(
 	if err != nil {
 		return err
 	}
-	dataRootHash := DataCommitmentTupleRootSignBytes(types.BridgeID, big.NewInt(int64(dc.Nonce)), commitment)
-	dcSig, err := NewEthereumSignature(dataRootHash.Bytes(), &orch.EvmPrivateKey)
+	dataRootHash := utils.DataCommitmentTupleRootSignBytes(types.BridgeID, big.NewInt(int64(dc.Nonce)), commitment)
+	dcSig, err := evm.NewEthereumSignature(dataRootHash.Bytes(), &orch.EvmPrivateKey)
 	if err != nil {
 		return err
 	}
 
-	msg := NewMsgDataCommitmentConfirm(
+	msg := utils.NewMsgDataCommitmentConfirm(
 		commitment.String(),
 		ethcmn.Bytes2Hex(dcSig),
 		orch.OrchAccAddress,
@@ -495,24 +497,6 @@ func (r Retrier) RetryThenFail(ctx context.Context, nonce uint64, retryMethod fu
 	if err != nil {
 		panic(err)
 	}
-}
-
-// MustGetEvent takes a corerpctypes.ResultEvent and checks whether it has
-// the provided eventName. If not, it panics.
-// TODO can be moved to some utils file
-func MustGetEvent(result corerpctypes.ResultEvent, eventName string) []string {
-	ev := result.Events[eventName]
-	if len(ev) == 0 {
-		panic(errors.Wrap(
-			types.ErrEmpty,
-			fmt.Sprintf(
-				"%s not found in event %s",
-				coretypes.EventTypeKey,
-				result.Events,
-			),
-		))
-	}
-	return ev
 }
 
 func ValidatorPartOfValset(members []types.BridgeValidator, ethAddr string) bool {

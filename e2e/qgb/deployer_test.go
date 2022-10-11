@@ -2,11 +2,11 @@ package e2e
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +40,7 @@ func TestDeployer(t *testing.T) {
 	HandleNetworkError(t, network, err, false)
 
 	// FIXME should we use the evm client here or go for raw queries?
-	evmClient := orchestrator.NewEvmClient(nil, bridge, nil, network.EVMRPC, orchestrator.DEFAULTEVMGASLIMIT)
+	evmClient := evm.NewEvmClient(nil, bridge, nil, network.EVMRPC, evm.DEFAULTEVMGASLIMIT)
 
 	eventNonce, err := evmClient.StateLastEventNonce(&bind.CallOpts{Context: ctx})
 	assert.NoError(t, err)

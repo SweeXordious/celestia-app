@@ -1,6 +1,8 @@
-package orchestrator
+package store
 
-import "github.com/celestiaorg/celestia-app/x/qgb/types"
+import (
+	"github.com/celestiaorg/celestia-app/x/qgb/types"
+)
 
 type QGBLoaderI interface {
 	// TODO add docs same as qgb_store

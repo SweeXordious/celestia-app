@@ -1,6 +1,11 @@
-package orchestrator
+package cmd
 
 import (
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/ingestion"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"os"
 	"sync"
 	"time"
@@ -35,19 +40,19 @@ func RelayerCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
 			if err != nil {
 				return err
 			}
 
-			store := NewInMemoryQGBStore()
-			loader := NewInMemoryLoader(*store)
-			storeQuerier := NewQGBStoreQuerier(logger, loader, querier)
+			inMemoryStore := store.NewInMemoryQGBStore()
+			loader := store.NewInMemoryLoader(*inMemoryStore)
+			storeQuerier := api.NewQGBStoreQuerier(logger, loader, querier)
 
-			relay, err := NewRelayer(
+			relay, err := orchestrator.NewRelayer(
 				querier,
 				storeQuerier,
-				NewEvmClient(
+				evm.NewEvmClient(
 					tmlog.NewTMLogger(os.Stdout),
 					qgbWrapper,
 					config.privateKey,
@@ -71,7 +76,7 @@ func RelayerCmd() *cobra.Command {
 					case <-cmd.Context().Done():
 						return
 					default:
-						err = relay.processEvents(cmd.Context())
+						err = relay.ProcessEvents(cmd.Context())
 						if err != nil {
 							logger.Error(err.Error())
 							time.Sleep(time.Second * 30)
@@ -82,14 +87,14 @@ func RelayerCmd() *cobra.Command {
 				}
 			}()
 
-			extractor, err := NewRPCExtractor(config.tendermintRPC)
+			extractor, err := ingestion.NewRPCExtractor(config.tendermintRPC)
 
 			enqueueSignalChan := make(chan struct{}, 1)
 
 			signalChan := make(chan struct{})
 
-			ingestor, err := NewIngestor(extractor, NewQGBParser(MakeDefaultAppCodec()),
-				NewInMemoryIndexer(store), querier, logger, 16, // make workers in config (default to number of CPUs/threads)
+			ingestor, err := ingestion.NewIngestor(extractor, ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
+				ingestion.NewInMemoryIndexer(inMemoryStore), querier, logger, 16, // make workers in config (default to number of CPUs/threads)
 			)
 
 			wg.Add(1)

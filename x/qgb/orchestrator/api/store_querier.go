@@ -1,8 +1,11 @@
-package orchestrator
+package api
 
 import (
 	"context"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -45,12 +48,12 @@ type QGBStoreQuerierI interface {
 
 type QGBStoreQuerier struct {
 	logger       tmlog.Logger
-	StoreLoader  QGBLoaderI
+	StoreLoader  store.QGBLoaderI
 	StateQuerier RPCStateQuerierI // TODO remove if https://github.com/celestiaorg/celestia-app/issues/843
 	// got accepted
 }
 
-func NewQGBStoreQuerier(logger tmlog.Logger, storeLoader QGBLoaderI, stateQuerier RPCStateQuerierI) *QGBStoreQuerier {
+func NewQGBStoreQuerier(logger tmlog.Logger, storeLoader store.QGBLoaderI, stateQuerier RPCStateQuerierI) *QGBStoreQuerier {
 	return &QGBStoreQuerier{
 		logger:       logger,
 		StoreLoader:  storeLoader,
@@ -164,8 +167,8 @@ func validateDCConfirm(commitment string, confirm types.MsgDataCommitmentConfirm
 		return ErrInvalidCommitmentInConfirm
 	}
 	bCommitment := common.Hex2Bytes(commitment)
-	dataRootHash := DataCommitmentTupleRootSignBytes(types.BridgeID, big.NewInt(int64(confirm.Nonce)), bCommitment)
-	err := ValidateEthereumSignature(dataRootHash.Bytes(), common.Hex2Bytes(confirm.Signature), common.HexToAddress(confirm.EthAddress))
+	dataRootHash := utils.DataCommitmentTupleRootSignBytes(types.BridgeID, big.NewInt(int64(confirm.Nonce)), bCommitment)
+	err := evm.ValidateEthereumSignature(dataRootHash.Bytes(), common.Hex2Bytes(confirm.Signature), common.HexToAddress(confirm.EthAddress))
 	if err != nil {
 		return err
 	}
@@ -277,7 +280,7 @@ func validateValsetConfirm(vs types.Valset, confirm types.MsgValsetConfirm) erro
 	if err != nil {
 		return err
 	}
-	err = ValidateEthereumSignature(signBytes.Bytes(), common.Hex2Bytes(confirm.Signature), common.HexToAddress(confirm.EthAddress))
+	err = evm.ValidateEthereumSignature(signBytes.Bytes(), common.Hex2Bytes(confirm.Signature), common.HexToAddress(confirm.EthAddress))
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
-package orchestrator
+package ingestion
 
 import (
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 )
 
@@ -17,10 +18,10 @@ var _ IndexerI = &InMemoryIndexer{}
 
 // TODO update name to InMemoryQGBIndexer
 type InMemoryIndexer struct {
-	Store *InMemoryQGBStore
+	Store *store.InMemoryQGBStore
 }
 
-func NewInMemoryIndexer(store *InMemoryQGBStore) *InMemoryIndexer {
+func NewInMemoryIndexer(store *store.InMemoryQGBStore) *InMemoryIndexer {
 	return &InMemoryIndexer{
 		Store: store,
 	}

@@ -2,11 +2,12 @@ package e2e
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +39,7 @@ func TestRelayerWithOneValidator(t *testing.T) {
 	err = network.WaitForRelayerToStart(ctx, bridge)
 	HandleNetworkError(t, network, err, false)
 
-	evmClient := orchestrator.NewEvmClient(nil, bridge, nil, network.EVMRPC, orchestrator.DEFAULTEVMGASLIMIT)
+	evmClient := evm.NewEvmClient(nil, bridge, nil, network.EVMRPC, evm.DEFAULTEVMGASLIMIT)
 
 	vsNonce, err := evmClient.StateLastEventNonce(&bind.CallOpts{Context: ctx})
 	assert.NoError(t, err)
@@ -89,7 +90,7 @@ func TestRelayerWithTwoValidators(t *testing.T) {
 	HandleNetworkError(t, network, err, false)
 
 	// FIXME should we use the evm client here or go for raw queries?
-	evmClient := orchestrator.NewEvmClient(nil, bridge, nil, network.EVMRPC, orchestrator.DEFAULTEVMGASLIMIT)
+	evmClient := evm.NewEvmClient(nil, bridge, nil, network.EVMRPC, evm.DEFAULTEVMGASLIMIT)
 
 	dcNonce, err := evmClient.StateLastEventNonce(&bind.CallOpts{Context: ctx})
 	assert.NoError(t, err)
@@ -131,7 +132,7 @@ func TestRelayerWithMultipleValidators(t *testing.T) {
 	time.Sleep(30 * time.Second)
 
 	// check whether the four validators are up and running
-	querier, err := orchestrator.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := api.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	latestValset, err := querier.QueryLatestValset(ctx)
@@ -145,7 +146,7 @@ func TestRelayerWithMultipleValidators(t *testing.T) {
 	HandleNetworkError(t, network, err, false)
 
 	// FIXME should we use the evm client here or go for raw queries?
-	evmClient := orchestrator.NewEvmClient(nil, bridge, nil, network.EVMRPC, orchestrator.DEFAULTEVMGASLIMIT)
+	evmClient := evm.NewEvmClient(nil, bridge, nil, network.EVMRPC, evm.DEFAULTEVMGASLIMIT)
 
 	dcNonce, err := evmClient.StateLastEventNonce(&bind.CallOpts{Context: ctx})
 	assert.NoError(t, err)

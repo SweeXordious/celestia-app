@@ -1,10 +1,10 @@
 package test
 
 import (
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"math/big"
 	"testing"
-
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	wrapper "github.com/celestiaorg/quantum-gravity-bridge/wrappers/QuantumGravityBridge.sol"
@@ -123,10 +123,10 @@ func Test_genValSetSignBytes(t *testing.T) {
 	key, err := crypto.HexToECDSA(testPriv)
 	require.NoError(t, err)
 
-	sig, err := orchestrator.NewEthereumSignature(s.Bytes(), key)
+	sig, err := evm.NewEthereumSignature(s.Bytes(), key)
 	require.NoError(t, err)
 
-	_, _, s = orchestrator.SigToVRS(ethcmn.Bytes2Hex(sig))
+	_, _, s = evm.SigToVRS(ethcmn.Bytes2Hex(sig))
 	require.NotNil(t, s)
 	// this test doesn't test anything meanfully, but can be used to generate
 	// signatures for testing the smart contracts
@@ -135,14 +135,14 @@ func Test_genValSetSignBytes(t *testing.T) {
 func Test_genTupleRootSignBytes(t *testing.T) {
 	bID := ethcmn.HexToHash("0x636865636b706f696e7400000000000000000000000000000000000000000000")
 	tupleRoot := ethcmn.HexToHash("0x636865636b706f696e7400000000000000000000000000000000000000000000")
-	s := orchestrator.DataCommitmentTupleRootSignBytes(bID, big.NewInt(1), tupleRoot[:])
+	s := utils.DataCommitmentTupleRootSignBytes(bID, big.NewInt(1), tupleRoot[:])
 
 	key, err := crypto.HexToECDSA(testPriv2)
 	require.NoError(t, err)
 
-	sig, err := orchestrator.NewEthereumSignature(s.Bytes(), key)
+	sig, err := evm.NewEthereumSignature(s.Bytes(), key)
 	require.NoError(t, err)
-	_, _, s = orchestrator.SigToVRS(ethcmn.Bytes2Hex(sig))
+	_, _, s = evm.SigToVRS(ethcmn.Bytes2Hex(sig))
 	require.NotNil(t, s)
 	// this test doesn't test anything meanfully, but can be used to generate
 	// signatures for testing the smart contracts
