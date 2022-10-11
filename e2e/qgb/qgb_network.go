@@ -24,6 +24,11 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 )
 
+// TODO the network should be updated to get data from a database.
+// Currently, the ingestion service is using an in-memory db. Thus,
+// it is complicated to get the confirms.
+// After implementing a db, these tests can be fixed.
+
 type QGBNetwork struct {
 	ComposePaths         []string
 	Identifier           string
