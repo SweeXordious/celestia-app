@@ -2,6 +2,7 @@ package ingestion
 
 import (
 	"context"
+
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
@@ -12,7 +13,7 @@ type ExtractorI interface {
 	ExtractBlock(ctx context.Context, height *int64) (*coretypes.ResultBlock, error)
 	QueryHeight(ctx context.Context) (int64, error)
 	SubscribeNewBlocks(ctx context.Context, subscriptionName string) (<-chan coretypes.ResultEvent, error)
-	//ExtractTransaction(block *coretypes.ResultBlock) (tmtypes.Txs, error)
+	// ExtractTransaction(block *coretypes.ResultBlock) (tmtypes.Txs, error)
 	Stop() error
 }
 

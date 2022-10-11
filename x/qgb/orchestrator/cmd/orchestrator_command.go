@@ -2,6 +2,12 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"strings"
+	"sync"
+	"syscall"
+
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	paytypes "github.com/celestiaorg/celestia-app/x/payment/types"
@@ -12,11 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/spf13/cobra"
 	tmlog "github.com/tendermint/tendermint/libs/log"
-	"os"
-	"os/signal"
-	"strings"
-	"sync"
-	"syscall"
 )
 
 func OrchCmd() *cobra.Command {

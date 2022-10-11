@@ -3,9 +3,10 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
-	"time"
 
 	tmlog "github.com/tendermint/tendermint/libs/log"
 

@@ -3,12 +3,13 @@ package ingestion
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	coretypes "github.com/tendermint/tendermint/types"
-	"sync"
 )
 
 // I don't like the name
@@ -175,7 +176,7 @@ func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, s
 		case <-signalChan:
 			return nil
 		case <-ctx.Done():
-			//close(signalChan)
+			// close(signalChan)
 			return nil
 		// TODO add signal and stuff
 		case height := <-heightChan:

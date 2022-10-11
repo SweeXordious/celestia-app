@@ -4,11 +4,12 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 
 	"github.com/spf13/cobra"
 

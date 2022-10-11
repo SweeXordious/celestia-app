@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	"github.com/pkg/errors"
 	corerpctypes "github.com/tendermint/tendermint/rpc/core/types"

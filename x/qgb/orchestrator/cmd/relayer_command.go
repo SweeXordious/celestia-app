@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"os"
+	"sync"
+	"time"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/ingestion"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
-	"os"
-	"sync"
-	"time"
 
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"

@@ -2,11 +2,12 @@ package e2e
 
 import (
 	"context"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/stretchr/testify/assert"

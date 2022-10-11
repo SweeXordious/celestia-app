@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	qgbcmd "github.com/celestiaorg/celestia-app/x/qgb/orchestrator/cmd"
 	"io"
 	"os"
+
+	qgbcmd "github.com/celestiaorg/celestia-app/x/qgb/orchestrator/cmd"
 
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"

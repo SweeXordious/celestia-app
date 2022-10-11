@@ -1,10 +1,11 @@
 package test
 
 import (
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"math/big"
 	"testing"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	wrapper "github.com/celestiaorg/quantum-gravity-bridge/wrappers/QuantumGravityBridge.sol"

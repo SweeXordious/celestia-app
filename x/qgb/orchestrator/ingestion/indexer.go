@@ -11,7 +11,7 @@ type IndexerI interface {
 	AddDataCommitmentConfirm(confirm types.MsgDataCommitmentConfirm) error
 	AddValsetConfirm(confirm types.MsgValsetConfirm) error
 	AddHeight(height int64) error
-	//Remove() error ?
+	// Remove() error ?
 }
 
 var _ IndexerI = &InMemoryIndexer{}

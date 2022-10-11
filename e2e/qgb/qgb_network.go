@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"math/big"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"

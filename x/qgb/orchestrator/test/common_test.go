@@ -2,11 +2,12 @@ package test
 
 import (
 	"context"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 
 	"github.com/celestiaorg/celestia-app/testutil"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator"

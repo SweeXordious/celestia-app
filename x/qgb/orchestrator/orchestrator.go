@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"math/big"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 
 	paytypes "github.com/celestiaorg/celestia-app/x/payment/types"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
@@ -88,7 +89,7 @@ func (orch Orchestrator) Start(ctx context.Context, enqueueMissingBlockSignal <-
 	defer close(noncesQueue)
 
 	// used to send a signal when the nonces processor wants to notify the nonces enqueuing services to stop.
-	//signalChan := make(chan struct{})
+	// signalChan := make(chan struct{})
 
 	withCancel, cancel := context.WithCancel(ctx)
 
@@ -225,7 +226,7 @@ func (orch Orchestrator) ProcessNonces(
 	for {
 		select {
 		case <-ctx.Done():
-			//close(signalChan) // TODO investigate if this is needed
+			// close(signalChan) // TODO investigate if this is needed
 			return nil
 		case nonce := <-noncesQueue:
 			orch.Logger.Debug("processing nonce", "nonce", nonce)

@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
@@ -10,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
-	"math/big"
-	"time"
 )
 
 type QGBStoreQuerierI interface {
