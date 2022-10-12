@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+
+	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -29,8 +32,18 @@ func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.ConsAddress, 
 	// this hook IS called for jailing or unbonding triggered by users but it IS NOT called for jailing triggered
 	// in the endblocker therefore we call the keeper function ourselves there.
 
+	// TODO investigate if this uint64 conversion is needed
 	h.k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
-	// TODO emit an event
+
+	// TODO add test to check if event is emitted
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeAttestationRequest,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHeight, fmt.Sprint(h.k.GetLatestAttestationNonce(ctx))),
+			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(ctx.BlockHeight())),
+		),
+	)
 	return nil
 }
 
