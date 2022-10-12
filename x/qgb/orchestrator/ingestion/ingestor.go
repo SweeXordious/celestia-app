@@ -170,6 +170,7 @@ func (ingestor Ingestor) EnqueueMissingBlockHeights(
 	return nil
 }
 
+// TODO rename to IngestionWorker
 func (ingestor Ingestor) Ingest(ctx context.Context, heightChan <-chan *int64, signalChan chan struct{}) error {
 	for {
 		select {
