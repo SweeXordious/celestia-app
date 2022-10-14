@@ -28,6 +28,9 @@ const (
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = "LastUnBondingBlockHeight"
 
+	// LastUnBondingAttestationNonce indexes the last validator unbonding attestation nonce
+	LastUnBondingAttestationNonce = "LastUnBondingAttestationNonce"
+
 	// LatestAttestationtNonce indexes the latest attestation request nonce
 	LatestAttestationtNonce = "LatestAttestationNonce"
 )

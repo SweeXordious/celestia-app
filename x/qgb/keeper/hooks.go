@@ -34,6 +34,10 @@ func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, _ sdk.ConsAddress, 
 
 	// TODO investigate if this uint64 conversion is needed
 	h.k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
+	// The latest attestation nonce is the nonce before the unbonding period.
+	// The reason for this is this is executed before endBlock. Thus, the new nonce
+	// is still not created at this level.
+	h.k.SetLastUnbondingAttestationNonce(ctx, h.k.GetLatestAttestationNonce(ctx))
 
 	// TODO add test to check if event is emitted
 	ctx.EventManager().EmitEvent(

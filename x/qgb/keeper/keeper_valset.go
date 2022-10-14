@@ -50,12 +50,33 @@ func (k Keeper) SetLastUnBondingBlockHeight(ctx sdk.Context, unbondingBlockHeigh
 	store.Set([]byte(types.LastUnBondingBlockHeight), types.UInt64Bytes(unbondingBlockHeight))
 }
 
+// SetLastUnbondingAttestationNonce sets the last unbonding attestation nonce. Note this
+// value is not saved to state or loaded at genesis. This value is reset to zero
+// on chain upgrade.
+func (k Keeper) SetLastUnbondingAttestationNonce(ctx sdk.Context, unbondingAttestationNonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set([]byte(types.LastUnBondingAttestationNonce), types.UInt64Bytes(unbondingAttestationNonce))
+}
+
 // GetLastUnBondingBlockHeight returns the last unbonding block height or zero
 // if not set. This value is not saved or loaded at genesis. This value is reset
 // to zero on chain upgrade.
 func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(types.LastUnBondingBlockHeight))
+
+	if len(bytes) == 0 {
+		return 0
+	}
+	return UInt64FromBytes(bytes)
+}
+
+// GetLastUnbondingAttestationNonce returns the last unbonding attestation nonce or zero
+// if not set. This value is not saved or loaded at genesis. This value is reset
+// to zero on chain upgrade.
+func (k Keeper) GetLastUnbondingAttestationNonce(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bytes := store.Get([]byte(types.LastUnBondingAttestationNonce))
 
 	if len(bytes) == 0 {
 		return 0

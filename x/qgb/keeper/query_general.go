@@ -17,6 +17,16 @@ func (k Keeper) LastUnbondingHeight(
 	}, nil
 }
 
+// LastUnbondingAttestationNonce queries the last unbonding attestation nonce.
+func (k Keeper) LastUnbondingAttestationNonce(
+	c context.Context,
+	req *types.QueryLastUnbondingAttestationNonceRequest,
+) (*types.QueryLastUnbondingAttestationNonceResponse, error) {
+	return &types.QueryLastUnbondingAttestationNonceResponse{
+		Nonce: k.GetLastUnbondingAttestationNonce(sdk.UnwrapSDKContext(c)),
+	}, nil
+}
+
 func (k Keeper) Params(c context.Context, request *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	params := k.GetParams(sdk.UnwrapSDKContext(c))
 	return &types.QueryParamsResponse{
