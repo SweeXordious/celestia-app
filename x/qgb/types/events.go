@@ -2,7 +2,7 @@ package types
 
 const (
 	EventTypeAttestationRequest  = "AttestationRequest"
-	EventTypeLastUnbondingHeight = "LastUnbondingHeight"
+	EventTypeLastUnbondingPeriod = "LastUnbondingPeriod"
 	AttributeKeyNonce            = "nonce"
 	AttributeKeyHeight           = "height"
 )
