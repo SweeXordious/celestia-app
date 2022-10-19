@@ -1,3 +1,4 @@
+// TODO better package name
 package utils
 
 import (
@@ -24,5 +25,13 @@ func MustGetEvent(result corerpctypes.ResultEvent, eventName string) []string {
 			),
 		))
 	}
+	return ev
+}
+
+// GetEvent takes a corerpctypes.ResultEvent and checks whether it has
+// the provided eventName. If not, returns empty slice.
+// TODO can be moved to some utils file
+func GetEvent(result corerpctypes.ResultEvent, eventName string) []string {
+	ev := result.Events[eventName]
 	return ev
 }

@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"context"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
 	"os"
 	"strconv"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 
-	"github.com/celestiaorg/celestia-app/app"
-	"github.com/celestiaorg/celestia-app/app/encoding"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
@@ -28,14 +27,21 @@ func DeployCmd() *cobra.Command {
 
 			logger := tmlog.NewTMLogger(os.Stdout)
 
-			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
-
-			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			tmQuerier, err := api.NewTmQuerier(config.tendermintRPC, logger)
 			if err != nil {
 				return err
 			}
 
-			vs, err := getStartingValset(cmd.Context(), querier, config.startingNonce)
+			//encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
+			inMemoryStore := store.NewInMemoryQGBStore()
+
+			loader := api.NewInMemoryLoader(inMemoryStore)
+			qgbQuerier := api.NewQGBQuerier(logger, loader, tmQuerier)
+			if err != nil {
+				return err
+			}
+
+			vs, err := getStartingValset(cmd.Context(), qgbQuerier, config.startingNonce)
 			if err != nil {
 				return errors.Wrap(
 					err,
@@ -64,14 +70,14 @@ func DeployCmd() *cobra.Command {
 				return err
 			}
 
-			querier.Stop()
+			//querier.Stop()
 			return nil
 		},
 	}
 	return addDeployFlags(command)
 }
 
-func getStartingValset(ctx context.Context, q *api.RPCStateQuerier, snonce string) (*types.Valset, error) {
+func getStartingValset(ctx context.Context, q api.QGBQuerierI, snonce string) (*types.Valset, error) {
 	switch snonce {
 	case "latest":
 		return q.QueryLatestValset(ctx)

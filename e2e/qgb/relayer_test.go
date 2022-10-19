@@ -133,7 +133,7 @@ func TestRelayerWithMultipleValidators(t *testing.T) {
 	time.Sleep(30 * time.Second)
 
 	// check whether the four validators are up and running
-	querier, err := api.NewRPCStateQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
+	querier, err := api.NewTmQuerier(network.CelestiaGRPC, network.TendermintRPC, nil, network.EncCfg)
 	HandleNetworkError(t, network, err, false)
 
 	latestValset, err := querier.QueryLatestValset(ctx)

@@ -37,7 +37,7 @@ func OrchCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			querier, err := api.NewTmQuerier(config.tendermintRPC, logger)
 			if err != nil {
 				panic(err)
 			}
@@ -60,8 +60,18 @@ func OrchCmd() *cobra.Command {
 			}
 
 			inMemoryStore := store.NewInMemoryQGBStore()
-			loader := store.NewInMemoryLoader(*inMemoryStore)
-			storeQuerier := api.NewQGBStoreQuerier(logger, loader, querier)
+			loader := api.NewInMemoryLoader(inMemoryStore)
+			storeQuerier := api.NewQGBQuerier(logger, loader, querier)
+
+			tmExtractor, err := ingestion.NewTmRPCExtractor(config.tendermintRPC)
+			if err != nil {
+				panic(err) // TODO check if we need to panic
+			}
+
+			height, err := tmExtractor.QueryHeight(ctx)
+			if err != nil {
+				panic(err)
+			}
 
 			retrier := orchestrator.NewRetrier(logger, 5)
 			orch, err := orchestrator.NewOrchestrator(
@@ -72,6 +82,7 @@ func OrchCmd() *cobra.Command {
 				retrier,
 				signer,
 				*config.privateKey,
+				height,
 			)
 			if err != nil {
 				panic(err)
@@ -82,15 +93,21 @@ func OrchCmd() *cobra.Command {
 			// Listen for and trap any OS signal to gracefully shutdown and exit
 			go trapSignal(logger, cancel)
 
-			extractor, err := ingestion.NewRPCExtractor(config.tendermintRPC)
+			qgbExtractor, err := ingestion.NewQGBRPCExtractor(config.celesGRPC, encCfg)
 			if err != nil {
 				return err
 			}
 
-			enqueueSignalChan := make(chan struct{}, 1)
+			//enqueueSignalChan := make(chan struct{}, 1)
 
-			ingestor, err := ingestion.NewIngestor(extractor, ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
-				ingestion.NewInMemoryIndexer(inMemoryStore), querier, logger, 16, // make workers in config (default to number of threads or CPUs)
+			ingestor, err := ingestion.NewIngestor(
+				qgbExtractor,
+				tmExtractor,
+				ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
+				ingestion.NewInMemoryIndexer(inMemoryStore),
+				logger,
+				loader,
+				10, // make workers in config (default to number of threads or CPUs)
 			)
 			if err != nil {
 				return err
@@ -108,7 +125,7 @@ func OrchCmd() *cobra.Command {
 				defer wg.Done()
 				// TODO handle error
 				// TODO no enqueueSignalChan and signalChan in params
-				_ = ingestor.Start(ctx, enqueueSignalChan, signalChan)
+				_ = ingestor.Start(ctx, signalChan)
 			}()
 
 			wg.Add(1)
@@ -116,7 +133,7 @@ func OrchCmd() *cobra.Command {
 				defer wg.Done()
 				// TODO handle error and return != 0
 				// TODO no signalChan and enqueueSignalChan in params
-				orch.Start(ctx, enqueueSignalChan, signalChan)
+				orch.Start(ctx, signalChan)
 			}()
 
 			wg.Wait()

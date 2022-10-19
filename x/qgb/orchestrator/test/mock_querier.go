@@ -9,7 +9,7 @@ import (
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
-var _ api.RPCStateQuerierI = &mockQuerier{}
+var _ api.TmQuerierI = &mockQuerier{}
 
 type mockQuerier struct {
 	confirms []types.MsgDataCommitmentConfirm
@@ -99,7 +99,7 @@ func (q *mockQuerier) QueryDataCommitmentByNonce(ctx context.Context, nonce uint
 	return nil, nil //nolint:nilnil
 }
 
-func (q *mockQuerier) QueryAttestationByNonce(
+func (q *mockQuerier) ExtractAttestationByNonce(
 	ctx context.Context,
 	nonce uint64,
 ) (types.AttestationRequestI, error) {

@@ -71,15 +71,17 @@ func (k Keeper) GetLastUnBondingBlockHeight(ctx sdk.Context) uint64 {
 	return UInt64FromBytes(bytes)
 }
 
-// GetLastUnbondingAttestationNonce returns the last unbonding attestation nonce or zero
+// GetLastUnbondingAttestationNonce returns the last unbonding attestation nonce or 1
 // if not set. This value is not saved or loaded at genesis. This value is reset
-// to zero on chain upgrade.
+// to 1 on chain upgrade.
+// the reason 1 is used is because attestation nonces start at 1.
+// TODO decide whether we want to start attestation nonces on 1 or 0.
 func (k Keeper) GetLastUnbondingAttestationNonce(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get([]byte(types.LastUnBondingAttestationNonce))
 
 	if len(bytes) == 0 {
-		return 0
+		return 1
 	}
 	return UInt64FromBytes(bytes)
 }

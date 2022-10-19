@@ -41,17 +41,17 @@ func RelayerCmd() *cobra.Command {
 
 			encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
 
-			querier, err := api.NewRPCStateQuerier(config.celesGRPC, config.tendermintRPC, logger, encCfg)
+			tmQuerier, err := api.NewTmQuerier(config.tendermintRPC, logger)
 			if err != nil {
 				return err
 			}
 
 			inMemoryStore := store.NewInMemoryQGBStore()
-			loader := store.NewInMemoryLoader(*inMemoryStore)
-			storeQuerier := api.NewQGBStoreQuerier(logger, loader, querier)
+			loader := api.NewInMemoryLoader(inMemoryStore)
+			storeQuerier := api.NewQGBQuerier(logger, loader, tmQuerier)
 
 			relay, err := orchestrator.NewRelayer(
-				querier,
+				tmQuerier,
 				storeQuerier,
 				evm.NewEvmClient(
 					tmlog.NewTMLogger(os.Stdout),
@@ -88,14 +88,22 @@ func RelayerCmd() *cobra.Command {
 				}
 			}()
 
-			extractor, err := ingestion.NewRPCExtractor(config.tendermintRPC)
+			tmExtractor, err := ingestion.NewTmRPCExtractor(config.tendermintRPC)
+			qgbExtractor, err := ingestion.NewQGBRPCExtractor(config.celesGRPC, encCfg)
 
-			enqueueSignalChan := make(chan struct{}, 1)
+			//enqueueSignalChan := make(chan struct{}, 1)
 
 			signalChan := make(chan struct{})
 
-			ingestor, err := ingestion.NewIngestor(extractor, ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
-				ingestion.NewInMemoryIndexer(inMemoryStore), querier, logger, 16, // make workers in config (default to number of CPUs/threads)
+			ingestor, err := ingestion.NewIngestor(
+				qgbExtractor,
+				tmExtractor,
+				ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
+				ingestion.NewInMemoryIndexer(inMemoryStore),
+				logger,
+				loader,
+				16,
+				// make workers in config (default to number of CPUs/threads)
 			)
 
 			wg.Add(1)
@@ -103,7 +111,7 @@ func RelayerCmd() *cobra.Command {
 				defer wg.Done()
 				// TODO no enqueueSignalChan and signalChan
 				// TODO handle error and return != 0
-				_ = ingestor.Start(cmd.Context(), enqueueSignalChan, signalChan)
+				_ = ingestor.Start(cmd.Context(), signalChan)
 			}()
 
 			wg.Wait()

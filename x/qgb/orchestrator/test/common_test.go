@@ -32,8 +32,8 @@ func setupTestOrchestrator(t *testing.T, bc orchestrator.BroadcasterI) *orchestr
 
 	logger := tmlog.NewTMLogger(os.Stdout)
 	inMemoryStore := store.NewInMemoryQGBStore() // TODO use this for testing? or mock?
-	loader := store.NewInMemoryLoader(*inMemoryStore)
-	storeQuerier := api.NewQGBStoreQuerier(logger, loader, mockQuerier)
+	loader := api.NewInMemoryLoader(*inMemoryStore)
+	storeQuerier := api.NewQGBQuerier(logger, loader, mockQuerier)
 	orch, err := orchestrator.NewOrchestrator(
 		logger,
 		mockQuerier,
