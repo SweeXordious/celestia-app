@@ -71,9 +71,9 @@ func RelayerCmd() *cobra.Command {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				// TODO move this to a right coordination place
 				for {
 					select {
+					// TODO no one would cancel this context
 					case <-cmd.Context().Done():
 						return
 					default:
@@ -91,17 +91,15 @@ func RelayerCmd() *cobra.Command {
 			tmExtractor, err := ingestion.NewTmRPCExtractor(config.tendermintRPC)
 			qgbExtractor, err := ingestion.NewQGBRPCExtractor(config.celesGRPC, encCfg)
 
-			//enqueueSignalChan := make(chan struct{}, 1)
-
 			signalChan := make(chan struct{})
 
 			ingestor, err := ingestion.NewIngestor(
 				qgbExtractor,
 				tmExtractor,
-				ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
 				ingestion.NewInMemoryIndexer(inMemoryStore),
 				logger,
 				loader,
+				encoding.MakeConfig(app.ModuleEncodingRegisters...),
 				16,
 				// make workers in config (default to number of CPUs/threads)
 			)
@@ -109,9 +107,22 @@ func RelayerCmd() *cobra.Command {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				// TODO no enqueueSignalChan and signalChan
-				// TODO handle error and return != 0
-				_ = ingestor.Start(cmd.Context(), signalChan)
+				for {
+					select {
+					case <-cmd.Context().Done():
+						return
+					default:
+						// TODO no enqueueSignalChan and signalChan
+						// TODO handle error and return != 0
+						err = ingestor.Start(cmd.Context(), signalChan)
+						if err != nil {
+							logger.Error(err.Error())
+							time.Sleep(time.Second * 30)
+							continue
+						}
+						return
+					}
+				}
 			}()
 
 			wg.Wait()

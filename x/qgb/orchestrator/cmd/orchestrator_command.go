@@ -103,10 +103,10 @@ func OrchCmd() *cobra.Command {
 			ingestor, err := ingestion.NewIngestor(
 				qgbExtractor,
 				tmExtractor,
-				ingestion.NewQGBParser(ingestion.MakeDefaultAppCodec()),
 				ingestion.NewInMemoryIndexer(inMemoryStore),
 				logger,
 				loader,
+				encoding.MakeConfig(app.ModuleEncodingRegisters...),
 				10, // make workers in config (default to number of threads or CPUs)
 			)
 			if err != nil {

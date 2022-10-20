@@ -31,8 +31,8 @@ var _ I = &Orchestrator{}
 
 type I interface {
 	Start(ctx context.Context, signalChan chan struct{})
-	StartNewEventsListener(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
-	EnqueueMissingEvents(ctx context.Context, queue chan<- uint64, signalChan <-chan struct{}) error
+	StartNewEventsListener(ctx context.Context, queue chan<- uint64, lastNonce uint64, signalChan <-chan struct{}) error
+	EnqueueMissingEvents(ctx context.Context, queue chan<- uint64, lastNonce uint64, signalChan <-chan struct{}) error
 	ProcessNonces(ctx context.Context, noncesQueue <-chan uint64, requeueChan chan<- uint64, signalChan chan<- struct{}) error
 	Process(ctx context.Context, nonce uint64, requeueChan chan<- uint64) error
 	ProcessValsetEvent(ctx context.Context, valset types.Valset) error
@@ -98,12 +98,19 @@ func (orch Orchestrator) Start(ctx context.Context, signalChan chan struct{}) {
 
 	withCancel, cancel := context.WithCancel(ctx)
 
+	lastNonce, err := orch.getLastAttestationNonce(ctx, signalChan)
+	if err != nil {
+		cancel()
+		return
+	}
+
 	wg := &sync.WaitGroup{}
 
+	// FIXME the orchestrator is enqueuing twice nonces when listening for new events
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := orch.StartNewEventsListener(withCancel, noncesQueue, signalChan)
+		err := orch.StartNewEventsListener(withCancel, noncesQueue, lastNonce, signalChan)
 		if err != nil {
 			orch.Logger.Error("orch: error listening to new attestations", "err", err)
 			cancel()
@@ -141,7 +148,7 @@ func (orch Orchestrator) Start(ctx context.Context, signalChan chan struct{}) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := orch.EnqueueMissingEvents(withCancel, noncesQueue, signalChan)
+		err := orch.EnqueueMissingEvents(withCancel, noncesQueue, lastNonce, signalChan)
 		if err != nil {
 			orch.Logger.Error("orch: error enqueing missing attestations", "err", err)
 			cancel()
@@ -159,10 +166,10 @@ func (orch Orchestrator) Start(ctx context.Context, signalChan chan struct{}) {
 func (orch Orchestrator) StartNewEventsListener(
 	ctx context.Context,
 	queue chan<- uint64,
+	currentNonce uint64,
 	signalChan <-chan struct{},
 ) error {
 	orch.Logger.Info("orch: listening for new attestation nonces...")
-	currentNonce := uint64(0)
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
@@ -178,12 +185,9 @@ func (orch Orchestrator) StartNewEventsListener(
 			if currentNonce == lastNonce {
 				continue
 			}
-			if currentNonce == 0 {
-				currentNonce = lastNonce
-			}
 			// the for loop is not to miss attestations if stuck with a full nonces queue.
 			// or, too many changes happened.
-			for n := currentNonce + 1; n <= lastNonce; n++ {
+			for n := currentNonce; n <= lastNonce; n++ {
 				select {
 				case <-signalChan:
 					return nil
@@ -200,14 +204,10 @@ func (orch Orchestrator) StartNewEventsListener(
 func (orch Orchestrator) EnqueueMissingEvents(
 	ctx context.Context,
 	queue chan<- uint64,
+	latestNonce uint64,
 	signalChan <-chan struct{},
 ) error {
 	// TODO use either lastNonce or latestNonce across all places
-	latestNonce, err := orch.getLastAttestationNonce(ctx, signalChan)
-	if err != nil {
-		return err
-	}
-
 	lastUnbondingAttestationNonce, err := orch.getLastUnbondingAttestationNonce(ctx, signalChan) // TODO should wait and see
 	if err != nil {
 		return err
@@ -215,12 +215,7 @@ func (orch Orchestrator) EnqueueMissingEvents(
 
 	orch.Logger.Info("orch: syncing missing nonces", "latest_nonce", latestNonce, "last_unbonding_attestation_nonce", lastUnbondingAttestationNonce)
 
-	// To accommodate the delay that might happen between starting the two go routines above.
-	// Probably, it would be a good idea to further refactor the orchestrator to the relayer style
-	// as it is entirely synchronous. Probably, enqueing separatly old nonces and new ones, is not
-	// the best design.
-	// TODO decide on this later
-	for i := lastUnbondingAttestationNonce; i < latestNonce; i++ {
+	for i := lastUnbondingAttestationNonce; i <= latestNonce; i++ {
 		select {
 		case <-signalChan:
 			return nil
@@ -318,6 +313,7 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64, requeueChan 
 		if !ok {
 			return errors.Wrap(types.ErrAttestationNotValsetRequest, strconv.FormatUint(nonce, 10))
 		}
+		// TODO recheck this milestone implementation if it does what it's supposed to
 		if int64(vs.Height) > orch.qgbQuerier.GetStorageHeightsMilestone() &&
 			int64(vs.Height) <= orch.startHeight {
 			requeueChan <- nonce
@@ -342,6 +338,7 @@ func (orch Orchestrator) Process(ctx context.Context, nonce uint64, requeueChan 
 		if !ok {
 			return errors.Wrap(types.ErrAttestationNotDataCommitmentRequest, strconv.FormatUint(nonce, 10))
 		}
+		// TODO recheck this milestone implementation if it does what it's supposed to
 		if int64(dc.EndBlock) > orch.qgbQuerier.GetStorageHeightsMilestone() &&
 			int64(dc.EndBlock) <= orch.startHeight {
 			requeueChan <- nonce

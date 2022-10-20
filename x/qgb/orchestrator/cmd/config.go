@@ -229,12 +229,11 @@ func addDeployFlags(cmd *cobra.Command) *cobra.Command {
 }
 
 type deployConfig struct {
-	celestiaChainID                  string
-	evmRPC, celesGRPC, tendermintRPC string
-	evmChainID                       uint64
-	privateKey                       *ecdsa.PrivateKey
-	startingNonce                    string
-	evmGasLimit                      uint64
+	evmRPC, celesGRPC string
+	evmChainID        uint64
+	privateKey        *ecdsa.PrivateKey
+	startingNonce     string
+	evmGasLimit       uint64
 }
 
 func parseDeployFlags(cmd *cobra.Command) (deployConfig, error) {
@@ -249,15 +248,7 @@ func parseDeployFlags(cmd *cobra.Command) (deployConfig, error) {
 	if err != nil {
 		return deployConfig{}, fmt.Errorf("failed to hex-decode Ethereum ECDSA Private Key: %w", err)
 	}
-	chainID, err := cmd.Flags().GetString(celestiaChainIDFlag)
-	if err != nil {
-		return deployConfig{}, err
-	}
 	evmChainID, err := cmd.Flags().GetUint64(evmChainIDFlag)
-	if err != nil {
-		return deployConfig{}, err
-	}
-	tendermintRPC, err := cmd.Flags().GetString(tendermintRPCFlag)
 	if err != nil {
 		return deployConfig{}, err
 	}
@@ -279,13 +270,11 @@ func parseDeployFlags(cmd *cobra.Command) (deployConfig, error) {
 	}
 
 	return deployConfig{
-		privateKey:      ethPrivKey,
-		celestiaChainID: chainID,
-		evmChainID:      evmChainID,
-		celesGRPC:       celesGRPC,
-		tendermintRPC:   tendermintRPC,
-		evmRPC:          evmRPC,
-		startingNonce:   startingNonce,
-		evmGasLimit:     evmGasLimit,
+		privateKey:    ethPrivKey,
+		evmChainID:    evmChainID,
+		celesGRPC:     celesGRPC,
+		evmRPC:        evmRPC,
+		startingNonce: startingNonce,
+		evmGasLimit:   evmGasLimit,
 	}, nil
 }

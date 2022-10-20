@@ -63,9 +63,7 @@ done
 echo "deploying QGB contract..."
 
 /bin/celestia-appd deploy \
-  -x ${EVM_CHAIN_ID} \
   -d ${PRIVATE_KEY} \
-  -t ${TENDERMINT_RPC} \
   -c ${CELESTIA_GRPC} \
   -z ${EVM_CHAIN_ID} \
   -n ${STARTING_NONCE} \

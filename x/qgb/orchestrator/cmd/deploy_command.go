@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"context"
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/store"
+	"github.com/celestiaorg/celestia-app/app"
+	"github.com/celestiaorg/celestia-app/app/encoding"
+	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/ingestion"
 	"os"
 	"strconv"
 
-	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
@@ -25,23 +26,12 @@ func DeployCmd() *cobra.Command {
 				return err
 			}
 
-			logger := tmlog.NewTMLogger(os.Stdout)
-
-			tmQuerier, err := api.NewTmQuerier(config.tendermintRPC, logger)
+			extractor, err := ingestion.NewQGBRPCExtractor(config.celesGRPC, encoding.MakeConfig(app.ModuleEncodingRegisters...))
 			if err != nil {
 				return err
 			}
 
-			//encCfg := encoding.MakeConfig(app.ModuleEncodingRegisters...)
-			inMemoryStore := store.NewInMemoryQGBStore()
-
-			loader := api.NewInMemoryLoader(inMemoryStore)
-			qgbQuerier := api.NewQGBQuerier(logger, loader, tmQuerier)
-			if err != nil {
-				return err
-			}
-
-			vs, err := getStartingValset(cmd.Context(), qgbQuerier, config.startingNonce)
+			vs, err := getStartingValset(cmd.Context(), extractor, config.startingNonce)
 			if err != nil {
 				return errors.Wrap(
 					err,
@@ -70,25 +60,33 @@ func DeployCmd() *cobra.Command {
 				return err
 			}
 
-			//querier.Stop()
 			return nil
 		},
 	}
 	return addDeployFlags(command)
 }
 
-func getStartingValset(ctx context.Context, q api.QGBQuerierI, snonce string) (*types.Valset, error) {
+func getStartingValset(ctx context.Context, extractor ingestion.QGBExtractorI, snonce string) (*types.Valset, error) {
 	switch snonce {
 	case "latest":
-		return q.QueryLatestValset(ctx)
+		return extractor.QueryLatestValset(ctx)
 	case "earliest":
-		return q.QueryValsetByNonce(ctx, 1)
+		// TODO make the first nonce 1 a const
+		att, err := extractor.ExtractAttestationByNonce(ctx, 1)
+		if err != nil {
+			return nil, err
+		}
+		vs, ok := att.(*types.Valset)
+		if !ok {
+			return nil, ErrUnmarshallValset
+		}
+		return vs, nil
 	default:
 		nonce, err := strconv.ParseUint(snonce, 10, 0)
 		if err != nil {
 			return nil, err
 		}
-		attestation, err := q.QueryAttestationByNonce(ctx, nonce)
+		attestation, err := extractor.ExtractAttestationByNonce(ctx, nonce)
 		if err != nil {
 			return nil, err
 		}
@@ -102,6 +100,6 @@ func getStartingValset(ctx context.Context, q api.QGBQuerierI, snonce string) (*
 			}
 			return value, nil
 		}
-		return q.QueryLastValsetBeforeNonce(ctx, nonce)
+		return extractor.QueryLastValsetBeforeNonce(ctx, nonce)
 	}
 }

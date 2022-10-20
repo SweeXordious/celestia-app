@@ -3,6 +3,7 @@ package ingestion
 import (
 	"context"
 	"fmt"
+	"github.com/celestiaorg/celestia-app/app/encoding"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
@@ -35,28 +36,28 @@ type Ingestor struct {
 	tmExtractor  TmExtractorI
 	qgbExtractor QGBExtractorI
 	loader       api.QGBLoaderI
-	parser       QGBParserI
 	indexer      IndexerI
+	encCfg       encoding.Config
 	workers      int
 }
 
 func NewIngestor(
 	qgbExtractor QGBExtractorI,
 	tmExtractor TmExtractorI,
-	parser QGBParserI,
 	indexer IndexerI,
 	logger tmlog.Logger,
 	loader api.QGBLoaderI,
+	encCfg encoding.Config,
 	workers int,
 ) (*Ingestor, error) {
 	return &Ingestor{
 		tmExtractor:  tmExtractor,
-		parser:       parser,
 		indexer:      indexer,
 		workers:      workers,
 		qgbExtractor: qgbExtractor,
 		logger:       logger,
 		loader:       loader,
+		encCfg:       encCfg,
 	}, nil
 }
 
@@ -287,40 +288,20 @@ func (ingestor *Ingestor) IngestBlockHeight(ctx context.Context, height *int64, 
 		return err
 	}
 	for _, coreTx := range block.Block.Txs {
-		sdkTx, err := ingestor.parser.ParseCoreTx(coreTx)
+		sdkTx, err := ingestor.encCfg.TxConfig.TxDecoder()(coreTx)
 		if err != nil {
 			// TODO concrete errors everywhere
 			return fmt.Errorf("error while unpacking message: %s", err)
 		}
-		for _, msg := range sdkTx.Body.Messages {
-			sdkMsg, err := ingestor.parser.ParseSdkTx(msg)
-			if err != nil {
-				return err
-			}
-			isDcc, err := ingestor.parser.IsDataCommitmentConfirm(sdkMsg)
-			if err != nil {
-				return nil
-			}
-			if isDcc {
-				dcc, err := ingestor.parser.ParseDataCommitmentConfirm(sdkMsg)
+		for _, msg := range sdkTx.GetMsgs() {
+			switch m := msg.(type) {
+			case *types.MsgDataCommitmentConfirm:
+				err = ingestor.handleDataCommitmentConfirm(*m)
 				if err != nil {
 					return err
 				}
-				err = ingestor.handleDataCommitmentConfirm(dcc)
-				if err != nil {
-					return err
-				}
-			}
-			isVs, err := ingestor.parser.IsValsetConfirm(sdkMsg)
-			if err != nil {
-				return nil
-			}
-			if isVs {
-				vs, err := ingestor.parser.ParseValsetConfirm(sdkMsg)
-				if err != nil {
-					return err
-				}
-				err = ingestor.handleValsetConfirm(vs)
+			case *types.MsgValsetConfirm:
+				err = ingestor.handleValsetConfirm(*m)
 				if err != nil {
 					return err
 				}

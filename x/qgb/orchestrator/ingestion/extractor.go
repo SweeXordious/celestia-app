@@ -7,6 +7,7 @@ import (
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
@@ -100,6 +101,8 @@ type QGBExtractorI interface {
 		nonce uint64,
 	) (types.AttestationRequestI, error)
 	QueryLatestAttestationNonce(ctx context.Context) (uint64, error) // TODO subscribe
+	QueryLastValsetBeforeNonce(ctx context.Context, nonce uint64) (*types.Valset, error)
+	QueryLatestValset(ctx context.Context) (*types.Valset, error)
 	Stop() error
 }
 
@@ -187,4 +190,62 @@ func (e QGBRPCExtractor) unmarshallAttestation(attestation *cdctypes.Any) (types
 		return nil, err
 	}
 	return unmarshalledAttestation, nil
+}
+
+func (e QGBRPCExtractor) QueryLatestValset(ctx context.Context) (*types.Valset, error) {
+	latestNonce, err := e.QueryLatestAttestationNonce(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	att, err := e.ExtractAttestationByNonce(ctx, latestNonce)
+	if err != nil {
+		return nil, err
+	}
+
+	switch vs := att.(type) {
+	case *types.Valset:
+		return vs, nil
+	default:
+		return e.QueryLastValsetBeforeNonce(ctx, latestNonce)
+	}
+}
+
+// QueryLastValsetBeforeNonce returns the previous valset before the provided `nonce`.
+// the `nonce` can be a valset, but this method will return the valset before it.
+// If the provided nonce is 1. It will return an error. Because, there is no valset before nonce 1.
+func (e QGBRPCExtractor) QueryLastValsetBeforeNonce(ctx context.Context, nonce uint64) (*types.Valset, error) {
+	if nonce == 1 { // TODO investigate if we want nonces to start at 1
+		return nil, types.ErrNoValsetBeforeNonceOne
+	}
+	latestAttestationNonce, err := e.QueryLatestAttestationNonce(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if nonce > latestAttestationNonce {
+		return nil, types.ErrNonceHigherThanLatestAttestationNonce
+	}
+	// starting at 1 because the current nonce can be a valset
+	// and we need the previous one.
+	i := uint64(1)
+	for {
+		if i >= nonce {
+			return nil, fmt.Errorf("couldn't find valset before nonce %d", nonce)
+		}
+		at, err := e.ExtractAttestationByNonce(ctx, nonce-i)
+		if err != nil {
+			return nil, err
+		}
+		if at == nil {
+			return nil, fmt.Errorf("nil attestation queried. nonce: %d", nonce-i)
+		}
+		if at.Type() == types.ValsetRequestType {
+			valset, ok := at.(*types.Valset)
+			if !ok {
+				return nil, errors.Wrap(types.ErrAttestationNotValsetRequest, "couldn't cast attestation to valset")
+			}
+			return valset, nil
+		}
+		i++
+	}
 }
