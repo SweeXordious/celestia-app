@@ -3,12 +3,13 @@ package ingestion
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/api"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	tmlog "github.com/tendermint/tendermint/libs/log"
-	"sync"
 )
 
 const (
@@ -131,7 +132,6 @@ func (ingestor *Ingestor) Start(ctx context.Context, signalChan chan struct{}) e
 			close(signalChan) // TODO handle these errors more carefully
 		}
 		ingestor.logger.Info("stopping enqueing missing blocks")
-
 	}()
 
 	for i := 0; i < ingestor.workers; i++ { // TODO this should be merged with the attestations one
@@ -175,8 +175,7 @@ func (ingestor *Ingestor) Start(ctx context.Context, signalChan chan struct{}) e
 	return nil
 }
 
-type ingestionJob interface {
-}
+type ingestionJob interface{}
 
 var _ ingestionJob = &attestationJob{}
 

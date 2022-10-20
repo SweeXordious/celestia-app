@@ -98,7 +98,7 @@ func OrchCmd() *cobra.Command {
 				return err
 			}
 
-			//enqueueSignalChan := make(chan struct{}, 1)
+			// enqueueSignalChan := make(chan struct{}, 1)
 
 			ingestor, err := ingestion.NewIngestor(
 				qgbExtractor,

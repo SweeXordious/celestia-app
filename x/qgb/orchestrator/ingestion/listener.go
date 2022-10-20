@@ -2,6 +2,7 @@ package ingestion
 
 import (
 	"context"
+
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/utils"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	corerpctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -48,7 +49,7 @@ func (listener *BlockHeightsListener) execute(ctx context.Context, result corerp
 		return nil
 	}
 	height, err := listener.tmExtractor.QueryHeight(ctx)
-	//listener.logger.Debug("found new block height", "height", height) // TODO better message
+	// listener.logger.Debug("found new block height", "height", height) // TODO better message
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"strconv"
+
 	"github.com/celestiaorg/celestia-app/app"
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/ingestion"
-	"os"
-	"strconv"
 
 	"github.com/celestiaorg/celestia-app/x/qgb/orchestrator/evm"
 

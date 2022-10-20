@@ -3,6 +3,7 @@ package ingestion
 import (
 	"context"
 	"fmt"
+
 	"github.com/celestiaorg/celestia-app/app/encoding"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -125,6 +126,7 @@ func NewQGBRPCExtractor(qgbRPCAddr string, enc encoding.Config) (*QGBRPCExtracto
 func (e QGBRPCExtractor) Stop() error {
 	return e.qgbRPC.Close()
 }
+
 func (e QGBRPCExtractor) QueryLastUnbondingHeight(ctx context.Context) (uint64, error) {
 	queryClient := types.NewQueryClient(e.qgbRPC)
 	resp, err := queryClient.LastUnbondingHeight(ctx, &types.QueryLastUnbondingHeightRequest{})
