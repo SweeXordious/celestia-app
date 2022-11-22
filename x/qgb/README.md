@@ -3,6 +3,8 @@
 ## Abstract
 This module contains the [Quantum Gravity Bridge](https://blog.celestia.org/celestiums/) (QGB) state machine implementation.
 
+The QGB state machine handles the creation of [`AttestationRequestI`](https://github.com/celestiaorg/celestia-app/blob/801a0d412631989ce97748badbd7bb676982db16/x/qgb/types/attestation.go#L15-L23) which can be a [`DataCommitment`](https://github.com/celestiaorg/celestia-app/blob/801a0d412631989ce97748badbd7bb676982db16/proto/qgb/types.proto#L31-L47) or [`Valset`](https://github.com/celestiaorg/celestia-app/blob/801a0d412631989ce97748badbd7bb676982db16/proto/qgb/types.proto#L17-L29).
+
 ## State machine
 
 The QGB state machine handles the creation of the attestations requests:
