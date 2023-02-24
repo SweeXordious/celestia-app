@@ -211,7 +211,7 @@ func DefaultNetwork(t *testing.T, blockTime time.Duration) (cleanup func() error
 		if err != nil {
 			return err
 		}
-		return removeDir(path.Join([]string{tmCfg.RootDir, "config"}...))
+		return removeDir(t, path.Join([]string{tmCfg.RootDir, "config"}...))
 	}, accounts, cctx
 }
 
@@ -219,13 +219,15 @@ func DefaultNetwork(t *testing.T, blockTime time.Duration) (cleanup func() error
 // The main reason for using it is to know if some file is used by some leaking process during
 // cleanup and be able to identify where the leak is occurring.
 // TODO: remove after fixing the CI flakiness
-func removeDir(rootDir string) error {
+func removeDir(t *testing.T, rootDir string) error {
 	dir, err := os.ReadDir(rootDir)
 	if err != nil {
 		return err
 	}
 	for _, d := range dir {
-		err := os.RemoveAll(path.Join([]string{rootDir, d.Name()}...))
+		p := path.Join([]string{rootDir, d.Name()}...)
+		t.Logf("deleting %s", p)
+		err := os.RemoveAll(p)
 		if err != nil {
 			return err
 		}
@@ -234,5 +236,6 @@ func removeDir(rootDir string) error {
 	if err != nil {
 		return err
 	}
+	t.Log("finished deleting")
 	return nil
 }
