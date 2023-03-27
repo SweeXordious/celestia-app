@@ -184,6 +184,7 @@ require (
 )
 
 replace (
+	github.com/celestiaorg/quantum-gravity-bridge => github.com/sweexordious/quantum-gravity-bridge v1.2.1-0.20230327080031-dd73d7c772f0
 	github.com/cosmos/cosmos-sdk => github.com/celestiaorg/cosmos-sdk v1.8.0-sdk-v0.46.7
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tendermint/tendermint => github.com/celestiaorg/celestia-core v1.15.0-tm-v0.34.23

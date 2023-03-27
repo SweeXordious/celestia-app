@@ -12,7 +12,7 @@ import (
 
 	"github.com/celestiaorg/celestia-app/pkg/proof"
 	"github.com/celestiaorg/celestia-app/x/qgb/types"
-	wrapper "github.com/celestiaorg/quantum-gravity-bridge/wrappers/QuantumGravityBridge.sol"
+	qgbcontract "github.com/celestiaorg/quantum-gravity-bridge/wrappers/QuantumGravityBridge.sol"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -275,7 +275,7 @@ func VerifyShares(ctx context.Context, logger tmlog.Logger, config VerifyConfig,
 	}
 	defer ethClient.Close()
 
-	qgbWrapper, err := wrapper.NewQuantumGravityBridge(config.ContractAddr, ethClient)
+	qgbWrapper, err := qgbcontract.NewWrappers(config.ContractAddr, ethClient)
 	if err != nil {
 		return
 	}
@@ -304,13 +304,13 @@ func VerifyShares(ctx context.Context, logger tmlog.Logger, config VerifyConfig,
 
 func VerifyDataRootInclusion(
 	ctx context.Context,
-	qgbWrapper *wrapper.QuantumGravityBridge,
+	qgbWrapper *qgbcontract.Wrappers,
 	nonce uint64,
 	height uint64,
 	dataRoot []byte,
 	proof merkle.Proof,
 ) (bool, error) {
-	tuple := wrapper.DataRootTuple{
+	tuple := qgbcontract.DataRootTuple{
 		Height:   big.NewInt(int64(height)),
 		DataRoot: *(*[32]byte)(dataRoot),
 	}
@@ -319,7 +319,7 @@ func VerifyDataRootInclusion(
 	for i, aunt := range proof.Aunts {
 		sideNodes[i] = *(*[32]byte)(aunt)
 	}
-	wrappedProof := wrapper.BinaryMerkleProof{
+	wrappedProof := qgbcontract.BinaryMerkleProof{
 		SideNodes: sideNodes,
 		Key:       big.NewInt(proof.Index),
 		NumLeaves: big.NewInt(proof.Total),
