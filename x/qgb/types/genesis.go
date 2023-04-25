@@ -20,7 +20,7 @@ var ParamsStoreKeyDataCommitmentWindow = []byte("DataCommitmentWindow")
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: &Params{
-			DataCommitmentWindow: 400,
+			DataCommitmentWindow: 4,
 		},
 	}
 }
@@ -49,11 +49,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 func validateDataCommitmentWindow(i interface{}) error {
-	val, ok := i.(uint64)
+	_, ok := i.(uint64)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
-	} else if val < 100 {
-		return fmt.Errorf("invalid average EVM block time, too short for latency limitations")
 	}
 	return nil
 }

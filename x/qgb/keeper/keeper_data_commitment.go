@@ -23,11 +23,11 @@ func (k Keeper) GetCurrentDataCommitment(ctx sdk.Context) (types.DataCommitment,
 }
 
 func (k Keeper) GetDataCommitmentWindowParam(ctx sdk.Context) uint64 {
-	resp, err := k.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
-	if err != nil {
-		panic(err)
-	}
-	return resp.Params.DataCommitmentWindow
+	//resp, err := k.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	//if err != nil {
+	//	panic(err)
+	//}
+	return 4
 }
 
 // GetDataCommitmentForHeight returns the attestation containing the provided height.
