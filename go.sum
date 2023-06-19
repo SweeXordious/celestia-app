@@ -178,8 +178,8 @@ github.com/celestiaorg/merkletree v0.0.0-20210714075610-a84dc3ddbbe4 h1:CJdIpo8n
 github.com/celestiaorg/merkletree v0.0.0-20210714075610-a84dc3ddbbe4/go.mod h1:fzuHnhzj1pUygGz+1ZkB3uQbEUL4htqCGJ4Qs2LwMZA=
 github.com/celestiaorg/nmt v0.16.0 h1:4CX6d1Uwf1C+tGcAWskPve0HCDTnI4Ey8ffjiDwcGH0=
 github.com/celestiaorg/nmt v0.16.0/go.mod h1:GfwIvQPhUakn1modWxJ+rv8dUjJzuXg5H+MLFM1o7nY=
-github.com/celestiaorg/quantum-gravity-bridge v1.3.0 h1:9zPIp7w1FWfkPnn16y3S4FpFLnQtS7rm81CUVcHEts0=
-github.com/celestiaorg/quantum-gravity-bridge v1.3.0/go.mod h1:6WOajINTDEUXpSj5UZzod16UZ96ZVB/rFNKyM+Mt1gI=
+github.com/celestiaorg/quantum-gravity-bridge v1.3.1-0.20230619010845-2664f8bc64a6 h1:GS+vZfOi427wnNp8C/n2SPxy2DLRUMWt5TprHqX86dI=
+github.com/celestiaorg/quantum-gravity-bridge v1.3.1-0.20230619010845-2664f8bc64a6/go.mod h1:6WOajINTDEUXpSj5UZzod16UZ96ZVB/rFNKyM+Mt1gI=
 github.com/celestiaorg/rsmt2d v0.9.0 h1:kon78I748ZqjNzI8OAqPN+2EImuZuanj/6gTh8brX3o=
 github.com/celestiaorg/rsmt2d v0.9.0/go.mod h1:E06nDxfoeBDltWRvTR9dLviiUZI5/6mLXAuhSJzz3Iw=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
