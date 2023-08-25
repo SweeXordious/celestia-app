@@ -15,7 +15,7 @@ const (
 
 	// MinimumDataCommitmentWindow is a constant that defines the minimum
 	// allowable window for the QGB data commitments.
-	MinimumDataCommitmentWindow = 100
+	MinimumDataCommitmentWindow = 1
 )
 
 // ParamsStoreKeyDataCommitmentWindow is the key used for the
@@ -26,7 +26,7 @@ var ParamsStoreKeyDataCommitmentWindow = []byte("DataCommitmentWindow")
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: &Params{
-			DataCommitmentWindow: 400,
+			DataCommitmentWindow: 5,
 		},
 	}
 }
